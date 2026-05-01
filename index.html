@@ -18,17 +18,15 @@
   --bg2:     #141418;
   --bg3:     #1e1e24;
   --border:  rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.05);
   --accent:  #3b82f6;
   --accent2: #60a5fa;
   --green:   #22c55e;
-  --green2:  #16a34a;
   --red:     #ef4444;
   --gold:    #f59e0b;
   --white:   #ffffff;
   --off:     #e2e8f0;
-  --muted:   rgba(226,232,240,0.4);
-  --muted2:  rgba(226,232,240,0.2);
+  --muted:   rgba(226,232,240,0.38);
+  --muted2:  rgba(226,232,240,0.18);
 }
 
 *, *::before, *::after {
@@ -36,252 +34,225 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   user-select: none;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
-html, body {
-  width: 100%; height: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--white);
-}
+html { height: 100%; background: var(--bg); }
 
 body {
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  inset: 0;
+  width: 100%; height: 100dvh;
+  display: flex; flex-direction: column;
+  position: fixed; inset: 0;
+  background: var(--bg); color: var(--white);
+  overflow: hidden;
 }
 
-/* ════════════════════════════
+/* ══════════════════════════════
    SETUP SCREEN
-════════════════════════════ */
-#setupScreen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+══════════════════════════════ */
+#setup {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
   padding: 32px 24px;
 }
-
-.setup-icon { font-size: 48px; margin-bottom: 16px; }
-.setup-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
-.setup-title span { color: var(--accent2); }
-.setup-desc {
-  font-size: 14px; color: var(--muted);
-  text-align: center; line-height: 1.6;
-  margin-bottom: 28px; max-width: 300px;
-}
-.setup-label {
-  width: 100%; font-size: 12px; font-weight: 600;
-  letter-spacing: 0.5px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 6px;
-}
-.setup-input {
-  width: 100%; padding: 14px 16px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--white); font-size: 14px; font-weight: 500;
-  margin-bottom: 16px; outline: none;
-  transition: border-color 0.2s;
+.s-icon { font-size: 44px; margin-bottom: 14px; }
+.s-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+.s-title span { color: var(--accent2); }
+.s-desc { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 24px; max-width: 290px; }
+.s-lbl { width: 100%; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.s-inp {
+  width: 100%; padding: 13px 14px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 12px;
+  color: var(--white); font-size: 13px; font-weight: 500;
+  margin-bottom: 14px; outline: none; transition: border-color 0.2s;
   -webkit-user-select: text; user-select: text;
 }
-.setup-input:focus { border-color: var(--accent); }
-.setup-input::placeholder { color: var(--muted2); }
-.setup-btn {
-  width: 100%; padding: 16px;
-  border-radius: 14px; border: none;
+.s-inp:focus { border-color: var(--accent); }
+.s-inp::placeholder { color: var(--muted2); }
+.s-btn {
+  width: 100%; padding: 15px; border-radius: 13px; border: none;
   background: var(--accent); color: #fff;
-  font-size: 16px; font-weight: 700;
-  cursor: pointer; transition: all 0.15s;
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s;
 }
-.setup-btn:active { transform: scale(0.97); }
-.setup-err { margin-top: 12px; font-size: 13px; color: var(--red); text-align: center; display: none; }
-.setup-err.show { display: block; }
+.s-btn:active { transform: scale(0.97); }
+.s-err { margin-top: 10px; font-size: 12px; color: var(--red); text-align: center; display: none; }
+.s-err.show { display: block; }
 
-/* ════════════════════════════
-   MAIN APP
-════════════════════════════ */
-#appScreen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
-#appScreen.show { display: flex; }
+/* ══════════════════════════════
+   APP SHELL
+══════════════════════════════ */
+#app { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+#app.show { display: flex; }
 
-/* ── Header ── */
-.hdr {
+/* ── TOP BAR — tiny, compact ── */
+.topbar {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: max(env(safe-area-inset-top), 14px) 20px 12px;
-  border-bottom: 1px solid var(--border);
+  /* Use safe area for notch/island */
+  padding: max(env(safe-area-inset-top), 10px) 14px 8px;
   background: var(--bg);
 }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--accent), #818cf8);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-}
-.brand-name { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
-.brand-name em { font-style: normal; color: var(--accent2); }
-.brand-sub { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
 
-.status-pill {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 50px;
+.brand { display: flex; align-items: center; gap: 7px; }
+.b-icon {
+  width: 26px; height: 26px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.b-name { font-size: 13px; font-weight: 800; letter-spacing: -0.3px; }
+.b-name em { font-style: normal; color: var(--accent2); }
+
+.spill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 50px;
   background: var(--bg3); border: 1px solid var(--border);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.5px; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
   color: var(--muted); transition: all 0.25s;
 }
-.status-pill.run { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); color: var(--green); }
-.status-pill.stp { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--red); }
-.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; transition: background 0.25s; }
+.spill.run { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); color: var(--green); }
+.spill.stp { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--red); }
+.sdot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted2); transition: background 0.25s; }
 .sdot.live { background: var(--green); animation: blink 1.1s infinite; }
 .sdot.dead { background: var(--red); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-/* ── Timer ── */
-.timer-area {
+/* ── MINI TIMER ROW — sits between topbar and grid ── */
+.timerrow {
   flex-shrink: 0;
-  text-align: center;
-  padding: 14px 20px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 14px 6px;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
-  transition: padding 0.35s ease;
 }
-.timer-area.compact { padding: 8px 20px 8px; }
 
-.timer-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
-
+.elapsed-block { display: flex; flex-direction: column; }
+.elapsed-lbl { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
 #timer {
-  font-size: clamp(54px, 17vw, 76px);
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: -3px;
+  letter-spacing: -1px;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
   color: var(--off);
-  transition: font-size 0.35s ease, color 0.2s;
+  line-height: 1;
+  transition: color 0.2s;
 }
-/* Shrinks when running */
-#timer.run {
-  color: var(--green);
-  font-size: clamp(36px, 11vw, 52px);
-}
+#timer.run { color: var(--green); }
 #timer.stp { color: var(--red); }
 
 #splitInfo {
-  margin-top: 6px;
-  min-height: 18px;
-  font-size: 13px; font-weight: 500;
-  color: var(--muted);
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: all 0.25s;
+  font-size: 11px; font-weight: 500; color: var(--muted);
+  text-align: right; max-width: 55%;
+  line-height: 1.3;
 }
-.si-name { font-weight: 700; color: var(--accent2); }
+.si-name { font-weight: 700; color: var(--accent2); display: block; }
 .si-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--off); }
 
-/* ── Grid ── */
-.grid-area {
+/* ══════════════════════════════
+   GRID — takes ALL remaining space
+══════════════════════════════ */
+.grid-wrap {
   flex: 1 1 0; min-height: 0;
-  padding: 10px 12px 6px;
+  padding: 8px 10px 6px;
   display: flex; flex-direction: column;
-}
-.grid-label {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 8px; flex-shrink: 0;
 }
 #grid {
   flex: 1 1 0; min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-auto-rows: 1fr;
-  gap: 8px;
+  gap: 7px;
 }
 
 .act {
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--bg2);
   color: var(--off);
-  font-size: clamp(13px, 4vw, 16px);
-  font-weight: 600; letter-spacing: -0.2px;
+  /* Font scales with available space */
+  font-size: clamp(14px, 4.2vw, 18px);
+  font-weight: 700; letter-spacing: -0.3px;
   cursor: pointer;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 4px; padding: 10px 8px;
-  text-align: center; line-height: 1.3;
+  gap: 5px; padding: 10px 8px;
+  text-align: center; line-height: 1.25;
   position: relative; overflow: hidden;
   transition: transform 0.1s, background 0.15s, border-color 0.15s;
+  /* Subtle top sheen */
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 40%);
 }
-.act::after {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
-  border-radius: 14px 14px 0 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-  pointer-events: none;
+.act:disabled { opacity: 0.13; cursor: not-allowed; }
+.act:not(:disabled):active { transform: scale(0.90); }
+.act:not(:disabled):hover { background-color: var(--bg3); border-color: rgba(59,130,246,0.4); }
+.act.done {
+  background-color: rgba(34,197,94,0.1);
+  border-color: rgba(34,197,94,0.4);
 }
-.act:disabled { opacity: 0.15; cursor: not-allowed; }
-.act:not(:disabled):active { transform: scale(0.91); }
-.act:not(:disabled):hover { background: var(--bg3); border-color: rgba(59,130,246,0.35); }
-.act.done { background: rgba(34,197,94,0.09); border-color: rgba(34,197,94,0.35); }
-.act-split { font-size: 12px; font-weight: 600; color: var(--green); font-variant-numeric: tabular-nums; }
-.act-num { position: absolute; top: 7px; right: 9px; font-size: 9px; font-weight: 700; color: var(--gold); }
+.act-split {
+  font-size: 13px; font-weight: 600; color: var(--green);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
+}
+.act-num {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 10px; font-weight: 700; color: var(--gold);
+}
 
-/* ── Bottom ── */
+/* ══════════════════════════════
+   BOTTOM BAR — compact, uses safe area
+══════════════════════════════ */
 .btm {
   flex-shrink: 0;
-  padding: 8px 12px max(env(safe-area-inset-bottom), 14px);
+  /* pb fills the iPhone home indicator gap = no wasted space */
+  padding: 8px 10px max(env(safe-area-inset-bottom), 10px);
   background: var(--bg);
   border-top: 1px solid var(--border);
 }
 
 #btnSave {
   display: none;
-  width: 100%; padding: 17px;
-  margin-bottom: 9px;
+  width: 100%; padding: 15px;
+  margin-bottom: 7px;
   border-radius: 14px; border: none;
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  color: #fff; font-size: 16px; font-weight: 700;
+  color: #fff; font-size: 15px; font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+  box-shadow: 0 4px 18px rgba(59,130,246,0.3);
   transition: all 0.15s;
 }
 #btnSave.show { display: block; }
 #btnSave:not(:disabled):active { transform: scale(0.97); opacity: 0.9; }
-#btnSave:disabled { opacity: 0.45; cursor: not-allowed; }
+#btnSave:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 #btnGo, #btnStop {
-  height: 60px; border-radius: 14px; border: none;
-  font-size: 17px; font-weight: 700; letter-spacing: -0.2px;
+  height: 54px; border-radius: 14px; border: none;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.2px;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 7px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: all 0.15s;
 }
 #btnGo:disabled, #btnStop:disabled { opacity: 0.2; cursor: not-allowed; }
 #btnGo:not(:disabled):active, #btnStop:not(:disabled):active { transform: scale(0.95); }
-#btnGo { background: var(--green); color: #fff; box-shadow: 0 4px 18px rgba(34,197,94,0.3); }
-#btnGo:not(:disabled):hover { filter: brightness(1.07); }
+#btnGo { background: var(--green); color: #fff; box-shadow: 0 4px 16px rgba(34,197,94,0.28); }
 #btnStop { background: var(--bg3); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
 #btnStop:not(:disabled):hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
 
 /* ── Toast ── */
 .toast {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 90px); left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 80px); left: 50%;
   transform: translateX(-50%) translateY(10px);
-  padding: 11px 22px; border-radius: 50px;
-  font-size: 14px; font-weight: 600;
+  padding: 10px 20px; border-radius: 50px;
+  font-size: 13px; font-weight: 600;
   white-space: nowrap; opacity: 0; pointer-events: none;
   transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
   z-index: 999; background: var(--bg3); color: var(--white);
-  border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  border: 1px solid var(--border); box-shadow: 0 8px 28px rgba(0,0,0,0.6);
 }
-.toast.ok { background: var(--green2); border-color: transparent; }
+.toast.ok { background: #16a34a; border-color: transparent; }
 .toast.er { background: var(--red); border-color: transparent; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
@@ -289,52 +260,56 @@ body {
 <body>
 
 <!-- SETUP -->
-<div id="setupScreen">
-  <div class="setup-icon">✈</div>
-  <div class="setup-title">FTS <span>Arrival</span></div>
-  <div class="setup-desc">Paste your Apps Script URL to connect to your Google Sheet.</div>
-  <div class="setup-label">Apps Script URL</div>
-  <input class="setup-input" id="scriptUrl" type="url"
+<div id="setup">
+  <div class="s-icon">✈</div>
+  <div class="s-title">FTS <span>Arrival</span></div>
+  <div class="s-desc">Paste your Apps Script URL to connect to your Google Sheet.</div>
+  <div class="s-lbl">Apps Script URL</div>
+  <input class="s-inp" id="scriptUrl" type="url"
     placeholder="https://script.google.com/macros/s/..."
     autocomplete="off" autocorrect="off" spellcheck="false">
-  <button class="setup-btn" id="setupBtn" onclick="connectScript()">Connect & Load</button>
-  <div class="setup-err" id="setupErr"></div>
+  <button class="s-btn" id="setupBtn" onclick="connectScript()">Connect & Load</button>
+  <div class="s-err" id="setupErr"></div>
 </div>
 
 <!-- MAIN APP -->
-<div id="appScreen">
-  <div class="hdr">
+<div id="app">
+
+  <!-- Top bar: tiny brand + status -->
+  <div class="topbar">
     <div class="brand">
-      <div class="brand-icon">✈</div>
-      <div>
-        <div class="brand-name">FTS <em>Arrival</em></div>
-        <div class="brand-sub">Ground Process Timer</div>
-      </div>
+      <div class="b-icon">✈</div>
+      <div class="b-name">FTS <em>Arrival</em></div>
     </div>
-    <div class="status-pill" id="statusPill">
+    <div class="spill" id="spill">
       <div class="sdot" id="sdot"></div>
       <span id="sTxt">Ready</span>
     </div>
   </div>
 
-  <div class="timer-area" id="timerArea">
-    <div class="timer-label">Elapsed</div>
-    <div id="timer">0:00.000</div>
-    <div id="splitInfo"><span style="color:var(--muted)">Tap Start — then tap each action as it happens</span></div>
+  <!-- Mini timer row: small timer left, last split right -->
+  <div class="timerrow">
+    <div class="elapsed-block">
+      <div class="elapsed-lbl">Elapsed</div>
+      <div id="timer">0:00.000</div>
+    </div>
+    <div id="splitInfo"><span style="color:var(--muted);font-size:11px;">Tap Start</span></div>
   </div>
 
-  <div class="grid-area">
-    <div class="grid-label">Ground Actions</div>
+  <!-- BIG grid — gets all remaining space -->
+  <div class="grid-wrap">
     <div id="grid"></div>
   </div>
 
+  <!-- Bottom: save + start/stop -->
   <div class="btm">
-    <button id="btnSave" onclick="doSave()">Save to Sheet</button>
+    <button id="btnSave" onclick="doSave()">✈ Save to Sheet</button>
     <div class="ctrl">
       <button id="btnGo"   onclick="startTimer()">▶ Start</button>
       <button id="btnStop" onclick="stopTimer()" disabled>■ Stop</button>
     </div>
   </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -342,7 +317,6 @@ body {
 <script>
 const STORE_KEY = 'fts_script_url';
 let SCRIPT_URL = localStorage.getItem(STORE_KEY) || '';
-
 let actions=[], splits=[], running=false, saving=false;
 let t0=null, lastTap=null, ival=null, sessionISO=null, tapN=0;
 
@@ -357,7 +331,7 @@ async function connectScript() {
   const btn = document.getElementById('setupBtn');
   err.classList.remove('show');
   if (!url.includes('script.google.com')) {
-    err.textContent = 'That doesn\'t look like an Apps Script URL.';
+    err.textContent = "Doesn't look like an Apps Script URL.";
     err.classList.add('show'); return;
   }
   btn.textContent = 'Connecting…';
@@ -365,12 +339,11 @@ async function connectScript() {
     const res = await fetch(url + '?action=headers');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    if (!data.actions || !data.actions.length) throw new Error('No actions found in sheet');
+    if (!data.actions?.length) throw new Error('No actions found');
     localStorage.setItem(STORE_KEY, url);
     SCRIPT_URL = url;
     actions = data.actions;
-    showApp();
-    buildGrid();
+    showApp(); buildGrid();
   } catch(e) {
     err.textContent = 'Failed: ' + e.message;
     err.classList.add('show');
@@ -379,8 +352,8 @@ async function connectScript() {
 }
 
 function showApp() {
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('appScreen').classList.add('show');
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').classList.add('show');
 }
 
 async function loadHeaders() {
@@ -388,8 +361,7 @@ async function loadHeaders() {
     const res = await fetch(SCRIPT_URL + '?action=headers');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    actions = data.actions;
-    buildGrid();
+    actions = data.actions; buildGrid();
   } catch(e) { showToast('Sheet error: ' + e.message, 'er'); }
 }
 
@@ -399,8 +371,8 @@ function buildGrid() {
   g.innerHTML = '';
   actions.forEach((a, i) => {
     const b = document.createElement('button');
-    b.className = 'act'; b.id = 'ab'+i; b.disabled = true;
-    b.innerHTML = `${a.name}<span class="act-split" id="as${i}"></span>`;
+    b.className='act'; b.id='ab'+i; b.disabled=true;
+    b.innerHTML=`${a.name}<span class="act-split" id="as${i}"></span>`;
     b.addEventListener('click', () => tapAction(i));
     g.appendChild(b);
   });
@@ -409,150 +381,128 @@ function buildGrid() {
 // ── Start ──
 function startTimer() {
   if (running) return;
-  running = true; saving = false;
-  t0 = lastTap = performance.now();
-  sessionISO = new Date().toISOString();
-  tapN = 0; splits = [];
-
-  ival = setInterval(() => {
-    document.getElementById('timer').textContent = fmt(performance.now() - t0);
-  }, 41);
-
-  // Timer shrinks when running
-  document.getElementById('timer').className = 'run';
-  document.getElementById('timerArea').classList.add('compact');
-
+  running=true; saving=false;
+  t0=lastTap=performance.now();
+  sessionISO=new Date().toISOString();
+  tapN=0; splits=[];
+  ival=setInterval(()=>{
+    document.getElementById('timer').textContent=fmt(performance.now()-t0);
+  },41);
+  document.getElementById('timer').className='run';
   setStatus('run');
-  document.getElementById('btnGo').disabled = true;
-  document.getElementById('btnStop').disabled = false;
+  document.getElementById('btnGo').disabled=true;
+  document.getElementById('btnStop').disabled=false;
   document.getElementById('btnSave').classList.remove('show');
-  setSplitInfo(null, null);
-
-  actions.forEach((_, i) => {
-    const b = document.getElementById('ab'+i);
-    b.className = 'act'; b.disabled = false;
-    document.getElementById('as'+i).textContent = '';
-    const n = b.querySelector('.act-num'); if (n) n.remove();
+  setSplit(null,null);
+  actions.forEach((_,i)=>{
+    const b=document.getElementById('ab'+i);
+    b.className='act'; b.disabled=false;
+    document.getElementById('as'+i).textContent='';
+    const n=b.querySelector('.act-num'); if(n) n.remove();
   });
 }
 
-// ── Stop — ONLY stops, never saves, never touches btnSave ──
+// ── Stop ──
 function stopTimer() {
   if (!running) return;
-  // immediately lock to prevent any re-entry
-  running = false;
-  clearInterval(ival);
-  ival = null;
-
-  // Timer grows back to big when stopped
-  document.getElementById('timer').className = 'stp';
-  document.getElementById('timerArea').classList.remove('compact');
-
+  running=false;
+  clearInterval(ival); ival=null;
+  document.getElementById('timer').className='stp';
   setStatus('stp');
-  document.getElementById('btnGo').disabled = false;
-  document.getElementById('btnStop').disabled = true;
-  actions.forEach((_, i) => document.getElementById('ab'+i).disabled = true);
-
-  // Show save button only if we have splits — after a small delay to
-  // make absolutely sure no accidental touch carries over
-  const hasSplits = splits.length > 0;
-  setTimeout(() => {
-    if (hasSplits) {
+  document.getElementById('btnGo').disabled=false;
+  document.getElementById('btnStop').disabled=true;
+  actions.forEach((_,i)=>document.getElementById('ab'+i).disabled=true);
+  const has=splits.length>0;
+  setTimeout(()=>{
+    if(has){
       document.getElementById('btnSave').classList.add('show');
-      setSplitInfo(null, splits.length + ' split' + (splits.length > 1 ? 's' : '') + ' — tap Save');
+      setSplit(null, splits.length+' split'+(splits.length>1?'s':'')+' — tap Save');
     } else {
-      setSplitInfo(null, 'No splits recorded');
+      setSplit(null,'No splits');
     }
-  }, 80);
+  },80);
 }
 
-// ── Tap action ──
+// ── Tap ──
 function tapAction(i) {
-  if (!running) return;
-  const now = performance.now();
-  const delta = now - lastTap;
-  lastTap = now; tapN++;
-  const name = actions[i].name;
-  const ex = splits.findIndex(s => s.actionName === name);
-  if (ex !== -1) splits.splice(ex, 1);
-  splits.push({ actionName: name, deltaMs: delta });
-
-  const btn = document.getElementById('ab'+i);
-  btn.className = 'act done';
-  document.getElementById('as'+i).textContent = fmt(delta);
-  let badge = btn.querySelector('.act-num');
-  if (!badge) { badge = document.createElement('span'); badge.className = 'act-num'; btn.appendChild(badge); }
-  badge.textContent = '#' + tapN;
-  setSplitInfo(name, fmt(delta));
+  if(!running) return;
+  const now=performance.now();
+  const delta=now-lastTap; lastTap=now; tapN++;
+  const name=actions[i].name;
+  const ex=splits.findIndex(s=>s.actionName===name);
+  if(ex!==-1) splits.splice(ex,1);
+  splits.push({actionName:name,deltaMs:delta});
+  const btn=document.getElementById('ab'+i);
+  btn.className='act done';
+  document.getElementById('as'+i).textContent=fmt(delta);
+  let badge=btn.querySelector('.act-num');
+  if(!badge){badge=document.createElement('span');badge.className='act-num';btn.appendChild(badge);}
+  badge.textContent='#'+tapN;
+  setSplit(name,fmt(delta));
 }
 
-function setSplitInfo(name, val) {
-  const el = document.getElementById('splitInfo');
-  if (name && val) {
-    el.innerHTML = `<span class="si-name">${name}</span><span style="color:var(--muted)">→</span><span class="si-time">${val}</span>`;
-  } else if (val) {
-    el.innerHTML = `<span style="color:var(--muted)">${val}</span>`;
+function setSplit(name,val){
+  const el=document.getElementById('splitInfo');
+  if(name&&val){
+    el.innerHTML=`<span class="si-name">${name}</span><span class="si-time">${val}</span>`;
+  } else if(val){
+    el.innerHTML=`<span style="color:var(--muted);font-size:11px;text-align:right;">${val}</span>`;
   } else {
-    el.innerHTML = `<span style="color:var(--muted)">Tap Start — then tap each action as it happens</span>`;
+    el.innerHTML=`<span style="color:var(--muted);font-size:11px;">Tap Start</span>`;
   }
 }
 
 // ── Save ──
 async function doSave() {
-  if (saving || running) return; // extra guard
-  saving = true;
-  const btn = document.getElementById('btnSave');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  if(saving||running) return;
+  saving=true;
+  const btn=document.getElementById('btnSave');
+  btn.disabled=true; btn.textContent='Saving…';
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ startTimeISO: sessionISO, splits })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    showToast('✓ Saved to row ' + data.row, 'ok');
-    setTimeout(resetAll, 1400);
+    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({startTimeISO:sessionISO,splits})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    showToast('✓ Saved to row '+data.row,'ok');
+    setTimeout(resetAll,1400);
   } catch(e) {
-    showToast('Save failed: ' + e.message, 'er');
-    saving = false; btn.disabled = false; btn.textContent = 'Save to Sheet';
+    showToast('Save failed: '+e.message,'er');
+    saving=false; btn.disabled=false; btn.textContent='✈ Save to Sheet';
   }
 }
 
 // ── Reset ──
 function resetAll() {
-  clearInterval(ival); ival = null;
-  running = false; saving = false; tapN = 0;
-  splits = []; t0 = null; lastTap = null;
-  document.getElementById('timer').textContent = '0:00.000';
-  document.getElementById('timer').className = '';
-  document.getElementById('timerArea').classList.remove('compact');
-  document.getElementById('btnGo').disabled = false;
-  document.getElementById('btnStop').disabled = true;
+  clearInterval(ival); ival=null;
+  running=false; saving=false; tapN=0;
+  splits=[]; t0=null; lastTap=null;
+  document.getElementById('timer').textContent='0:00.000';
+  document.getElementById('timer').className='';
+  document.getElementById('btnGo').disabled=false;
+  document.getElementById('btnStop').disabled=true;
   document.getElementById('btnSave').classList.remove('show');
-  setSplitInfo(null, null);
-  setStatus('');
-  actions.forEach((_, i) => {
-    const b = document.getElementById('ab'+i);
-    b.className = 'act'; b.disabled = true;
-    document.getElementById('as'+i).textContent = '';
-    const n = b.querySelector('.act-num'); if (n) n.remove();
+  setSplit(null,null); setStatus('');
+  actions.forEach((_,i)=>{
+    const b=document.getElementById('ab'+i);
+    b.className='act'; b.disabled=true;
+    document.getElementById('as'+i).textContent='';
+    const n=b.querySelector('.act-num'); if(n) n.remove();
   });
 }
 
 // ── Helpers ──
-function fmt(ms) {
-  const t = Math.round(ms);
+function fmt(ms){
+  const t=Math.round(ms);
   return `${Math.floor(t/60000)}:${String(Math.floor((t%60000)/1000)).padStart(2,'0')}.${String(t%1000).padStart(3,'0')}`;
 }
-function setStatus(type) {
-  document.getElementById('statusPill').className = 'status-pill' + (type ? ' '+type : '');
-  document.getElementById('sdot').className = 'sdot' + (type==='run' ? ' live' : type==='stp' ? ' dead' : '');
-  document.getElementById('sTxt').textContent = type==='run' ? 'Running' : type==='stp' ? 'Stopped' : 'Ready';
+function setStatus(type){
+  document.getElementById('spill').className='spill'+(type?' '+type:'');
+  document.getElementById('sdot').className='sdot'+(type==='run'?' live':type==='stp'?' dead':'');
+  document.getElementById('sTxt').textContent=type==='run'?'Running':type==='stp'?'Stopped':'Ready';
 }
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast '+type+' show';
-  setTimeout(() => { t.className = 'toast '+type; }, 3000);
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>{t.className='toast '+type;},3000);
 }
 </script>
 </body>
