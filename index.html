@@ -41,9 +41,7 @@
 html { height:100%; background:var(--bg); }
 
 body {
-  width:100%;
-  /* dvh = dynamic viewport height, excludes browser chrome */
-  height:100dvh;
+  width:100%; height:100dvh;
   display:flex; flex-direction:column;
   position:fixed; inset:0;
   background:var(--bg); color:var(--white);
@@ -87,20 +85,12 @@ body {
 #app { display:none; flex-direction:column; height:100%; overflow:hidden; }
 #app.show { display:flex; }
 
-/* ── TOP BAR ── */
+/* ── TOP BAR — no icon, just text brand + status ── */
 .topbar {
   flex-shrink:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:max(env(safe-area-inset-top),10px) 14px 6px;
+  padding:max(env(safe-area-inset-top),10px) 14px 5px;
   background:var(--bg);
-}
-.brand { display:flex; align-items:center; gap:6px; }
-.b-icon {
-  width:24px; height:24px;
-  background:linear-gradient(135deg,var(--accent),#818cf8);
-  border-radius:6px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; flex-shrink:0;
 }
 .b-name { font-size:13px; font-weight:800; letter-spacing:-0.3px; }
 .b-name em { font-style:normal; color:var(--accent2); }
@@ -123,12 +113,12 @@ body {
 .timerrow {
   flex-shrink:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:2px 14px 6px;
+  padding:2px 14px 5px;
   border-bottom:1px solid var(--border);
   background:var(--bg);
+  gap:10px;
 }
-.elapsed-block { display:flex; flex-direction:column; }
-.elapsed-lbl { font-size:8px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:0px; }
+.elapsed-lbl { font-size:8px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
 #timer {
   font-size:22px; font-weight:800; letter-spacing:-0.5px;
   font-variant-numeric:tabular-nums; color:var(--off); line-height:1.1;
@@ -137,43 +127,35 @@ body {
 #timer.run { color:var(--green); }
 #timer.stp { color:var(--red); }
 
-/* Right side of timer row: queue badge OR last split */
+/* Right side: queue badge + split info on same line */
 .timerrow-right {
-  display:flex; flex-direction:column; align-items:flex-end; gap:3px;
+  display:flex; align-items:center; gap:6px;
+  flex:1; justify-content:flex-end; overflow:hidden;
 }
-#splitInfo {
-  font-size:11px; font-weight:500; color:var(--muted);
-  text-align:right; max-width:170px; line-height:1.3;
-}
-.si-name { font-weight:700; color:var(--accent2); display:block; font-size:11px; }
-.si-time { font-variant-numeric:tabular-nums; font-weight:700; color:var(--off); font-size:11px; }
 
-/* Queue badge — shows pending offline saves */
+#splitInfo {
+  font-size:11px; font-weight:600; color:var(--muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width:160px;
+}
+.si-name { color:var(--accent2); }
+.si-time { font-variant-numeric:tabular-nums; color:var(--off); }
+
+/* Queue badge */
 #queueBadge {
-  display:none;
-  align-items:center; gap:5px;
-  padding:3px 8px; border-radius:50px;
-  background:rgba(168,85,247,0.15);
-  border:1px solid rgba(168,85,247,0.35);
-  font-size:10px; font-weight:700;
-  color:var(--purple); cursor:pointer;
-  transition:all 0.2s;
+  display:none; align-items:center; gap:4px;
+  padding:3px 7px; border-radius:50px; flex-shrink:0;
+  background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.35);
+  font-size:10px; font-weight:700; color:var(--purple);
+  cursor:pointer; white-space:nowrap;
 }
 #queueBadge.show { display:flex; }
-#queueBadge:active { transform:scale(0.95); }
-.qb-dot {
-  width:6px; height:6px; border-radius:50%;
-  background:var(--purple);
-  animation:blink 1.4s infinite;
-}
+.qb-dot { width:5px; height:5px; border-radius:50%; background:var(--purple); animation:blink 1.4s infinite; }
 
 /* ══════════════════════════
    GRID — fills ALL remaining space
 ══════════════════════════ */
-.grid-wrap {
-  flex:1 1 0; min-height:0;
-  padding:7px 9px 5px;
-}
+.grid-wrap { flex:1 1 0; min-height:0; padding:7px 9px 5px; }
 #grid {
   width:100%; height:100%;
   display:grid;
@@ -181,12 +163,9 @@ body {
   grid-auto-rows:1fr;
   gap:7px;
 }
-
 .act {
-  border-radius:16px;
-  border:1px solid var(--border);
-  background:var(--bg2);
-  color:var(--off);
+  border-radius:16px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--off);
   font-size:clamp(14px,4.5vw,18px);
   font-weight:700; letter-spacing:-0.3px;
   cursor:pointer;
@@ -197,49 +176,50 @@ body {
   position:relative; overflow:hidden;
   transition:transform 0.1s, background 0.15s, border-color 0.15s;
   background-image:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%);
-  /* Fills cell fully */
   width:100%; height:100%;
 }
 .act:disabled { opacity:0.13; cursor:not-allowed; }
 .act:not(:disabled):active { transform:scale(0.90); }
-.act:not(:disabled):hover { background-color:var(--bg3); border-color:rgba(59,130,246,0.4); }
 .act.done { background-color:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.4); }
 .act-split { font-size:13px; font-weight:600; color:var(--green); font-variant-numeric:tabular-nums; }
 .act-num { position:absolute; top:8px; right:10px; font-size:10px; font-weight:700; color:var(--gold); }
 
 /* ══════════════════════════
    BOTTOM BAR
-   — padding-bottom uses safe-area so it sticks to the very bottom edge
 ══════════════════════════ */
 .btm {
   flex-shrink:0;
-  padding:7px 9px 0;
-  padding-bottom:max(env(safe-area-inset-bottom),8px);
-  background:var(--bg);
-  border-top:1px solid var(--border);
+  padding:7px 9px max(env(safe-area-inset-bottom),10px);
+  background:var(--bg); border-top:1px solid var(--border);
 }
 
+/*
+  Save button — CRITICAL:
+  pointer-events:none by default so it can NEVER be tapped accidentally.
+  Only becomes tappable 400ms after Stop is pressed via JS.
+  This is the main fix for the accidental save bug.
+*/
 #btnSave {
   display:none;
-  width:100%; padding:14px;
-  margin-bottom:7px;
+  width:100%; padding:14px; margin-bottom:7px;
   border-radius:14px; border:none;
   background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);
   color:#fff; font-size:15px; font-weight:700;
   cursor:pointer;
   box-shadow:0 4px 18px rgba(59,130,246,0.3);
   transition:all 0.15s;
+  pointer-events:none;   /* blocked until unlocked by JS */
+  opacity:0.5;           /* visually dim until ready */
 }
 #btnSave.show { display:block; }
-#btnSave:not(:disabled):active { transform:scale(0.97); opacity:0.9; }
-#btnSave:disabled { opacity:0.4; cursor:not-allowed; }
-
-/* 3-button row: Start | Stop | Sync */
-.ctrl {
-  display:grid;
-  grid-template-columns:1fr 1fr auto;
-  gap:7px;
+#btnSave.ready {
+  pointer-events:auto;   /* unlocked */
+  opacity:1;
 }
+#btnSave:not(:disabled):active { transform:scale(0.97); opacity:0.9; }
+#btnSave:disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+
+.ctrl { display:grid; grid-template-columns:1fr 1fr auto; gap:7px; }
 
 #btnGo,#btnStop,#btnSync {
   height:52px; border-radius:14px; border:none;
@@ -247,42 +227,28 @@ body {
   cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:5px;
   transition:all 0.15s;
+  /* prevent any accidental double-fire */
+  touch-action:manipulation;
 }
 #btnGo:disabled,#btnStop:disabled,#btnSync:disabled { opacity:0.2; cursor:not-allowed; }
-#btnGo:not(:disabled):active,#btnStop:not(:disabled):active,#btnSync:not(:disabled):active { transform:scale(0.94); }
+#btnGo:not(:disabled):active,#btnStop:not(:disabled):active { transform:scale(0.94); }
 
 #btnGo { background:var(--green); color:#fff; box-shadow:0 4px 16px rgba(34,197,94,0.28); }
 #btnStop { background:var(--bg3); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
-#btnStop:not(:disabled):hover { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.4); }
+#btnStop:not(:disabled):hover { background:rgba(239,68,68,0.1); }
 
-/* Sync button — square, purple, shows count */
 #btnSync {
   width:52px; flex-shrink:0;
-  background:var(--bg3);
-  border:1px solid rgba(168,85,247,0.2);
+  background:var(--bg3); border:1px solid rgba(168,85,247,0.2);
   color:var(--purple);
-  flex-direction:column; gap:1px;
-  position:relative; font-size:11px;
+  flex-direction:column; gap:1px; font-size:11px;
+  touch-action:manipulation;
 }
-#btnSync:not(:disabled):hover { background:rgba(168,85,247,0.1); border-color:rgba(168,85,247,0.4); }
+#btnSync.has-queue { border-color:rgba(168,85,247,0.45); background:rgba(168,85,247,0.1); animation:syncpulse 2s infinite; }
+@keyframes syncpulse { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)} 50%{box-shadow:0 0 0 5px rgba(168,85,247,0.15)} }
 .sync-icon { font-size:18px; line-height:1; }
-.sync-count {
-  font-size:10px; font-weight:800;
-  color:var(--purple); line-height:1;
-  display:none;
-}
+.sync-count { font-size:10px; font-weight:800; color:var(--purple); line-height:1; display:none; }
 .sync-count.show { display:block; }
-
-/* Badge pulse when there are queued items */
-#btnSync.has-queue {
-  border-color:rgba(168,85,247,0.45);
-  background:rgba(168,85,247,0.1);
-  animation:syncpulse 2s infinite;
-}
-@keyframes syncpulse {
-  0%,100% { box-shadow:0 0 0 0 rgba(168,85,247,0); }
-  50%      { box-shadow:0 0 0 5px rgba(168,85,247,0.15); }
-}
 
 /* ── Toast ── */
 .toast {
@@ -296,8 +262,8 @@ body {
   z-index:999; background:var(--bg3); color:var(--white);
   border:1px solid var(--border); box-shadow:0 8px 28px rgba(0,0,0,0.6);
 }
-.toast.ok { background:#16a34a; border-color:transparent; }
-.toast.er { background:var(--red); border-color:transparent; }
+.toast.ok   { background:#16a34a; border-color:transparent; }
+.toast.er   { background:var(--red); border-color:transparent; }
 .toast.info { background:#6366f1; border-color:transparent; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
@@ -321,10 +287,7 @@ body {
 <div id="app">
 
   <div class="topbar">
-    <div class="brand">
-      <div class="b-icon">✈</div>
-      <div class="b-name">FTS <em>Arrival</em></div>
-    </div>
+    <div class="b-name">FTS <em>Arrival</em></div>
     <div class="spill" id="spill">
       <div class="sdot" id="sdot"></div>
       <span id="sTxt">Ready</span>
@@ -332,17 +295,16 @@ body {
   </div>
 
   <div class="timerrow">
-    <div class="elapsed-block">
+    <div>
       <div class="elapsed-lbl">Elapsed</div>
       <div id="timer">0:00.000</div>
     </div>
     <div class="timerrow-right">
-      <!-- Queue badge — tapping it triggers sync -->
       <div id="queueBadge" onclick="syncQueue()">
         <div class="qb-dot"></div>
-        <span id="queueBadgeTxt">0 pending</span>
+        <span id="queueBadgeTxt">0</span>
       </div>
-      <div id="splitInfo"><span style="color:var(--muted);font-size:11px;">Tap Start</span></div>
+      <div id="splitInfo"><span style="color:var(--muted)">—</span></div>
     </div>
   </div>
 
@@ -351,11 +313,12 @@ body {
   </div>
 
   <div class="btm">
+    <!-- Save button — starts blocked, unlocked 400ms after Stop -->
     <button id="btnSave" onclick="doSave()">✈ Save to Sheet</button>
     <div class="ctrl">
       <button id="btnGo"   onclick="startTimer()">▶ Start</button>
       <button id="btnStop" onclick="stopTimer()" disabled>■ Stop</button>
-      <button id="btnSync" onclick="syncQueue()" title="Sync offline saves">
+      <button id="btnSync" onclick="syncQueue()">
         <span class="sync-icon">⇪</span>
         <span class="sync-count" id="syncCount">0</span>
       </button>
@@ -366,118 +329,85 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Config ──
 const STORE_URL   = 'fts_script_url';
 const STORE_QUEUE = 'fts_offline_queue';
 let SCRIPT_URL = localStorage.getItem(STORE_URL) || '';
 
-// ── State ──
 let actions=[], splits=[], running=false, saving=false;
 let t0=null, lastTap=null, ival=null, sessionISO=null, tapN=0;
+let saveUnlockTimer=null; // timer that unlocks Save button after Stop
 
-// ── Offline queue helpers ──
-function getQueue() {
-  try { return JSON.parse(localStorage.getItem(STORE_QUEUE) || '[]'); } catch{ return []; }
-}
-function saveQueue(q) {
-  localStorage.setItem(STORE_QUEUE, JSON.stringify(q));
-}
-function pushToQueue(session) {
-  const q = getQueue();
-  q.push(session);
-  saveQueue(q);
-  updateSyncUI();
-}
-function updateSyncUI() {
-  const q = getQueue();
-  const n = q.length;
-  const syncBtn  = document.getElementById('btnSync');
-  const syncCnt  = document.getElementById('syncCount');
-  const badge    = document.getElementById('queueBadge');
-  const badgeTxt = document.getElementById('queueBadgeTxt');
-
-  syncCnt.textContent = n;
-  syncCnt.className   = n > 0 ? 'sync-count show' : 'sync-count';
-  syncBtn.className   = n > 0 ? 'has-queue' : '';
-
-  if (n > 0) {
-    badge.classList.add('show');
-    badgeTxt.textContent = n + ' pending offline';
-  } else {
-    badge.classList.remove('show');
-  }
+// ── Queue helpers ──
+function getQueue(){ try{return JSON.parse(localStorage.getItem(STORE_QUEUE)||'[]');}catch{return[];} }
+function saveQueue(q){ localStorage.setItem(STORE_QUEUE,JSON.stringify(q)); }
+function pushToQueue(s){ const q=getQueue(); q.push(s); saveQueue(q); updateSyncUI(); }
+function updateSyncUI(){
+  const q=getQueue(); const n=q.length;
+  const sc=document.getElementById('syncCount');
+  const sb=document.getElementById('btnSync');
+  const qb=document.getElementById('queueBadge');
+  const qt=document.getElementById('queueBadgeTxt');
+  sc.textContent=n; sc.className=n>0?'sync-count show':'sync-count';
+  sb.className=n>0?'has-queue':'';
+  if(n>0){ qb.classList.add('show'); qt.textContent=n+' offline'; }
+  else    { qb.classList.remove('show'); }
 }
 
 // ── Boot ──
-window.addEventListener('load', () => {
-  updateSyncUI();
-  if (SCRIPT_URL) { showApp(); loadHeaders(); }
-});
+window.addEventListener('load',()=>{ updateSyncUI(); if(SCRIPT_URL){showApp();loadHeaders();} });
 
 // ── Setup ──
-async function connectScript() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  const err = document.getElementById('setupErr');
-  const btn = document.getElementById('setupBtn');
+async function connectScript(){
+  const url=document.getElementById('scriptUrl').value.trim();
+  const err=document.getElementById('setupErr');
+  const btn=document.getElementById('setupBtn');
   err.classList.remove('show');
-  if (!url.includes('script.google.com')) {
-    err.textContent = "Doesn't look like an Apps Script URL.";
-    err.classList.add('show'); return;
-  }
-  btn.textContent = 'Connecting…';
-  try {
-    const res  = await fetch(url + '?action=headers');
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    if (!data.actions?.length) throw new Error('No actions found');
-    localStorage.setItem(STORE_URL, url);
-    SCRIPT_URL = url;
-    actions = data.actions;
+  if(!url.includes('script.google.com')){ err.textContent="Doesn't look like an Apps Script URL."; err.classList.add('show'); return; }
+  btn.textContent='Connecting…';
+  try{
+    const res=await fetch(url+'?action=headers');
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    if(!data.actions?.length) throw new Error('No actions found');
+    localStorage.setItem(STORE_URL,url);
+    SCRIPT_URL=url; actions=data.actions;
     showApp(); buildGrid();
-  } catch(e) {
-    err.textContent = 'Failed: ' + e.message;
-    err.classList.add('show');
-    btn.textContent = 'Connect & Load';
-  }
+  }catch(e){ err.textContent='Failed: '+e.message; err.classList.add('show'); btn.textContent='Connect & Load'; }
 }
-
-function showApp() {
-  document.getElementById('setup').style.display = 'none';
-  document.getElementById('app').classList.add('show');
-}
-
-async function loadHeaders() {
-  try {
-    const res  = await fetch(SCRIPT_URL + '?action=headers');
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    actions = data.actions; buildGrid();
-  } catch(e) { showToast('Sheet error: ' + e.message, 'er'); }
+function showApp(){ document.getElementById('setup').style.display='none'; document.getElementById('app').classList.add('show'); }
+async function loadHeaders(){
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=headers');
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    actions=data.actions; buildGrid();
+  }catch(e){ showToast('Sheet error: '+e.message,'er'); }
 }
 
 // ── Grid ──
-function buildGrid() {
-  const g = document.getElementById('grid');
-  g.innerHTML = '';
-  actions.forEach((a, i) => {
-    const b = document.createElement('button');
+function buildGrid(){
+  const g=document.getElementById('grid'); g.innerHTML='';
+  actions.forEach((a,i)=>{
+    const b=document.createElement('button');
     b.className='act'; b.id='ab'+i; b.disabled=true;
     b.innerHTML=`${a.name}<span class="act-split" id="as${i}"></span>`;
-    b.addEventListener('click', () => tapAction(i));
+    b.addEventListener('click',()=>tapAction(i));
     g.appendChild(b);
   });
 }
 
 // ── Start ──
-function startTimer() {
-  if (running) return;
+function startTimer(){
+  if(running) return;
+  // Cancel any pending save-unlock from a previous stop
+  clearTimeout(saveUnlockTimer);
+  lockSaveButton();
+
   running=true; saving=false;
   t0=lastTap=performance.now();
   sessionISO=new Date().toISOString();
   tapN=0; splits=[];
-  ival=setInterval(()=>{
-    document.getElementById('timer').textContent=fmt(performance.now()-t0);
-  },41);
+  ival=setInterval(()=>{ document.getElementById('timer').textContent=fmt(performance.now()-t0); },41);
   document.getElementById('timer').className='run';
   setStatus('run');
   document.getElementById('btnGo').disabled=true;
@@ -492,29 +422,45 @@ function startTimer() {
   });
 }
 
-// ── Stop ──
-function stopTimer() {
-  if (!running) return;
+// ── Stop — completely separated from Save ──
+function stopTimer(){
+  if(!running) return;
+
+  // 1. Immediately kill the timer
   running=false;
   clearInterval(ival); ival=null;
+
+  // 2. Update UI
   document.getElementById('timer').className='stp';
   setStatus('stp');
   document.getElementById('btnGo').disabled=false;
   document.getElementById('btnStop').disabled=true;
   actions.forEach((_,i)=>document.getElementById('ab'+i).disabled=true);
-  const has=splits.length>0;
-  setTimeout(()=>{
-    if(has){
-      document.getElementById('btnSave').classList.add('show');
-      setSplit(null, splits.length+' split'+(splits.length>1?'s':'')+' — tap Save');
-    } else {
-      setSplit(null,'No splits');
-    }
-  },80);
+
+  // 3. Show Save button BUT keep it locked (pointer-events:none, dim)
+  //    for 400ms so any lingering touch from Stop cannot hit Save
+  if(splits.length>0){
+    document.getElementById('btnSave').classList.add('show');
+    setSplit(null, splits.length+' split'+(splits.length>1?'s':'')+' — tap Save');
+    // Unlock Save only after 400ms delay
+    saveUnlockTimer=setTimeout(()=>{ unlockSaveButton(); }, 400);
+  } else {
+    setSplit(null,'No splits');
+  }
 }
 
-// ── Tap ──
-function tapAction(i) {
+function lockSaveButton(){
+  const btn=document.getElementById('btnSave');
+  btn.classList.remove('ready');
+  btn.classList.remove('show');
+}
+function unlockSaveButton(){
+  const btn=document.getElementById('btnSave');
+  btn.classList.add('ready');
+}
+
+// ── Tap action ──
+function tapAction(i){
   if(!running) return;
   const now=performance.now();
   const delta=now-lastTap; lastTap=now; tapN++;
@@ -533,78 +479,67 @@ function tapAction(i) {
 
 function setSplit(name,val){
   const el=document.getElementById('splitInfo');
-  if(name&&val){
-    el.innerHTML=`<span class="si-name">${name}</span><span class="si-time">${val}</span>`;
-  } else if(val){
-    el.innerHTML=`<span style="color:var(--muted);font-size:11px;text-align:right;">${val}</span>`;
-  } else {
-    el.innerHTML=`<span style="color:var(--muted);font-size:11px;">Tap Start</span>`;
-  }
+  if(name&&val) el.innerHTML=`<span class="si-name">${name}</span> <span class="si-time">${val}</span>`;
+  else if(val)  el.innerHTML=`<span style="color:var(--muted);font-size:11px;">${val}</span>`;
+  else          el.innerHTML=`<span style="color:var(--muted)">—</span>`;
 }
 
-// ── Save (online attempt, queue if offline) ──
-async function doSave() {
-  if(saving||running) return;
-  saving=true;
+// ── Save ──
+async function doSave(){
+  // Hard guards — multiple layers
+  if(saving) return;
+  if(running) return;
   const btn=document.getElementById('btnSave');
+  if(!btn.classList.contains('ready')) return; // still locked
+  if(splits.length===0) return;
+
+  saving=true;
   btn.disabled=true; btn.textContent='Saving…';
 
-  const session = { startTimeISO: sessionISO, splits };
-
-  try {
-    const res = await Promise.race([
-      fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify(session) }),
+  const session={startTimeISO:sessionISO,splits:[...splits]};
+  try{
+    const res=await Promise.race([
+      fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session)}),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
     ]);
-    const data = await res.json();
+    const data=await res.json();
     if(data.error) throw new Error(data.error);
     showToast('✓ Saved to row '+data.row,'ok');
     setTimeout(resetAll,1400);
-  } catch(e) {
-    // No internet or timeout — queue locally
+  }catch(e){
     pushToQueue(session);
-    showToast('No internet — saved offline ('+getQueue().length+' pending)','info');
+    showToast('Offline — queued ('+getQueue().length+' pending)','info');
     setTimeout(resetAll,1800);
   }
 }
 
-// ── Sync queued sessions when back online ──
-async function syncQueue() {
-  const q = getQueue();
+// ── Sync offline queue ──
+async function syncQueue(){
+  const q=getQueue();
   if(q.length===0){ showToast('Nothing to sync','info'); return; }
-
-  const syncBtn = document.getElementById('btnSync');
+  const syncBtn=document.getElementById('btnSync');
   syncBtn.disabled=true;
-  showToast('Syncing '+q.length+' session'+(q.length>1?'s':'')+'…','info');
-
+  showToast('Syncing '+q.length+'…','info');
   let saved=0, failed=[];
   for(const session of q){
-    try {
-      const res = await Promise.race([
-        fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify(session) }),
+    try{
+      const res=await Promise.race([
+        fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session)}),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
       ]);
-      const data = await res.json();
+      const data=await res.json();
       if(data.error) throw new Error(data.error);
       saved++;
-    } catch(e) {
-      failed.push(session); // keep failed ones in queue
-    }
+    }catch(e){ failed.push(session); }
   }
-
-  saveQueue(failed);
-  updateSyncUI();
-  syncBtn.disabled=false;
-
-  if(failed.length===0){
-    showToast('✓ All '+saved+' session'+(saved>1?'s':'')+' synced!','ok');
-  } else {
-    showToast('Synced '+saved+', '+failed.length+' still failed','er');
-  }
+  saveQueue(failed); updateSyncUI(); syncBtn.disabled=false;
+  if(failed.length===0) showToast('✓ All '+saved+' synced!','ok');
+  else showToast('Synced '+saved+', '+failed.length+' failed','er');
 }
 
 // ── Reset ──
-function resetAll() {
+function resetAll(){
+  clearTimeout(saveUnlockTimer);
   clearInterval(ival); ival=null;
   running=false; saving=false; tapN=0;
   splits=[]; t0=null; lastTap=null;
@@ -612,9 +547,9 @@ function resetAll() {
   document.getElementById('timer').className='';
   document.getElementById('btnGo').disabled=false;
   document.getElementById('btnStop').disabled=true;
-  document.getElementById('btnSave').classList.remove('show');
+  lockSaveButton();
   setSplit(null,null); setStatus('');
-  updateSyncUI(); // refresh queue count display
+  updateSyncUI();
   actions.forEach((_,i)=>{
     const b=document.getElementById('ab'+i);
     b.className='act'; b.disabled=true;
