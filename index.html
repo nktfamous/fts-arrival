@@ -65,12 +65,15 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .qb-dot{width:5px;height:5px;border-radius:50%;background:var(--purple);animation:blink 1.4s infinite;flex-shrink:0;}
 .grid-wrap{flex:1 1 0;min-height:0;padding:7px 9px 5px;}
 #grid{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:7px;}
-.act{border-radius:16px;border:1px solid var(--border);background:var(--bg2);color:var(--off);font-size:clamp(14px,4.5vw,18px);font-weight:700;letter-spacing:-.3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;text-align:center;line-height:1.25;position:relative;overflow:hidden;transition:transform .1s,background .15s,border-color .15s;background-image:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 40%);width:100%;height:100%;touch-action:manipulation;}
-.act:disabled{opacity:.13;cursor:not-allowed;}
+
+/* Grid Buttons - Fix for the 'darkening' issue */
+.act{border-radius:16px;border:1px solid var(--border);background:var(--bg2);color:var(--white);font-size:clamp(14px,4.5vw,18px);font-weight:700;letter-spacing:-.3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;text-align:center;line-height:1.25;position:relative;overflow:hidden;transition:transform .1s,background .15s,border-color .15s;background-image:linear-gradient(180deg,rgba(255,255,255,.06) 0%,transparent 60%);width:100%;height:100%;touch-action:manipulation;opacity:1;}
+.act:disabled{opacity:.25;cursor:not-allowed;} /* Slightly more visible when disabled */
 .act:not(:disabled):active{transform:scale(.90);}
-.act.done{background-color:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);}
+.act.done{background-color:rgba(34,197,94,.15);border-color:var(--green);color:var(--green);}
 .act-split{font-size:13px;font-weight:600;color:var(--green);font-variant-numeric:tabular-nums;}
 .act-num{position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;color:var(--gold);}
+
 .btm{flex-shrink:0;padding:7px 9px max(env(safe-area-inset-bottom),10px);background:var(--bg);border-top:1px solid var(--border);}
 #btnFinish{display:none;width:100%;padding:14px;margin-bottom:7px;border-radius:14px;border:none;background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(249,115,22,.3);transition:opacity .2s;pointer-events:none;opacity:.45;touch-action:manipulation;}
 #btnFinish.show{display:block;}
@@ -112,70 +115,52 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .taxi-btn:active{transform:scale(.93);}
 .taxi-btn.selected{background:rgba(249,115,22,.2);border-color:var(--taxi);box-shadow:0 0 16px rgba(249,115,22,.25);}
 
-/* Map area */
-.map-scroll{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 10px 4px;}
-
-/* ── Airport schematic map ── */
+/* Map Area Styling */
+.map-scroll{flex:1 1 0;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:15px;display:flex;justify-content:center;}
 .apron{
   position:relative;
-  width:100%;
-  background:rgba(255,255,255,0.015);
+  width: 320px; /* Fixed width to ensure buttons align with SVG background */
+  height: 480px;
+  background:rgba(255,255,255,0.02);
   border-radius:14px;
   border:1px solid var(--border);
-  overflow:hidden;
 }
+.apron-svg{display:block;width:100%;height:100%;}
+.apron-overlay{position:absolute;inset:0;}
 
-/* SVG map sits behind buttons */
-.apron-svg{
-  display:block;width:100%;height:auto;
-}
-
-/* Absolute-positioned lot buttons on top of SVG */
-.apron-overlay{
-  position:absolute;
-  inset:0;
-}
-
-/* Individual lot button on map */
+/* Parking Lot Buttons - Keeping your original style */
 .lot{
   position:absolute;
-  width:11.5%;
-  aspect-ratio:1;
-  border-radius:7px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(30,30,36,.85);
+  width:36px;
+  height:36px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.15);
+  background:var(--bg3);
   color:var(--off);
-  font-size:clamp(9px,2.8vw,13px);
-  font-weight:700;
+  font-size:11px;
+  font-weight:800;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   touch-action:manipulation;
-  transition:all .12s;
-  backdrop-filter:blur(2px);
-  text-align:center;line-height:1;
-  padding:2px;
+  transition:all .1s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 .lot:active{transform:scale(.85);}
 .lot.selected{
-  background:rgba(59,130,246,.35);
-  border-color:var(--accent);
-  color:var(--accent2);
-  box-shadow:0 0 12px rgba(59,130,246,.4);
+  background:var(--accent);
+  border-color:var(--accent2);
+  color:#fff;
+  box-shadow:0 0 12px rgba(59,130,246,.5);
 }
-
-/* B-series lots — exact match to image */
+/* B-Lot style: Blue border, White bg as requested */
 .lot.b-lot {
-  border: 2px solid #3b82f6; 
-  background: #ffffff;       
-  color: #3b82f6;            
-  font-weight: 900;
-  border-radius: 4px;        
+  background: #fff;
+  color: var(--accent);
+  border: 2px solid var(--accent);
 }
 .lot.b-lot.selected {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;            
-  box-shadow: 0 0 16px rgba(59,130,246,0.5);
+  background: var(--accent);
+  color: #fff;
 }
 
 /* Modal save */
@@ -193,7 +178,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 </head>
 <body>
 
-<!-- SETUP -->
 <div id="setup">
   <div class="s-icon">✈</div>
   <div class="s-title">FTS <span>Arrival</span></div>
@@ -204,7 +188,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
   <div class="s-err" id="setupErr"></div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app">
   <div class="topbar">
     <div class="timer-block">
@@ -233,7 +216,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
   </div>
 </div>
 
-<!-- ROUTE MODAL -->
 <div id="routeModal">
   <div class="modal-hdr">
     <div class="modal-title">Finish <span>Route</span></div>
@@ -242,7 +224,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
   <div class="route-summary" id="routeSummary">
     <span style="color:var(--muted)">Select Taxi Point → Parking Lot</span>
   </div>
-  <!-- Taxi points -->
   <div class="taxi-section">
     <div class="sec-lbl">Taxi Entry Point</div>
     <div class="taxi-row">
@@ -251,26 +232,21 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
       <button class="taxi-btn" data-taxi="H" onclick="selectTaxi(this)">H</button>
     </div>
   </div>
-  <!-- Map -->
   <div class="map-scroll">
     <div class="apron" id="apron">
-      <!-- SVG schematic background -->
-      <svg class="apron-svg" viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg">
-        <!-- Clean, minimalist building outlines matching your example -->
-        <g stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none">
-          <!-- Left side thin building -->
-          <rect x="90" y="240" width="25" height="70" rx="2" />
-          
-          <!-- Right side main buildings -->
-          <rect x="220" y="80" width="70" height="110" rx="2" />
-          <rect x="220" y="200" width="70" height="30" rx="2" />
-          <rect x="220" y="240" width="70" height="130" rx="2" />
-          
-          <!-- Bottom right building (Next to B-lots) -->
-          <rect x="235" y="380" width="55" height="100" rx="2" />
+      <svg class="apron-svg" viewBox="0 0 320 480" xmlns="http://www.w3.org/2000/svg">
+        <!-- Structural schematic lines -->
+        <g stroke="rgba(255,255,255,0.15)" stroke-width="2" fill="none">
+          <path d="M110 20 L110 460" /> <!-- Main vertical -->
+          <path d="M110 60 L280 60" /> <!-- Top horizontal -->
+          <path d="M40 240 L110 240" /> <!-- Mid horizontal left -->
+          <path d="M110 380 L280 380" /> <!-- Bottom horizontal -->
         </g>
+        <!-- Building blocks -->
+        <rect x="200" y="70" width="80" height="120" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)"/>
+        <rect x="200" y="220" width="80" height="140" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)"/>
+        <rect x="30" y="260" width="40" height="100" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)"/>
       </svg>
-      <!-- Lot buttons overlaid — positioned as % of apron container -->
       <div class="apron-overlay" id="apronOverlay"></div>
     </div>
   </div>
@@ -288,28 +264,20 @@ let actions=[],splits=[],running=false,saving=false;
 let t0=null,lastTap=null,ival=null,sessionISO=null,tapN=0,saveUnlockTimer=null;
 let selTaxi=null,selLot=null;
 
-// ── Lot positions on the apron SVG (% left, % top) ──
+// ── LOT POSITIONS (PX coordinates matched to 320x480 container) ──
 const LOT_POSITIONS = {
-  // Left Column (Straight line down)
-  '23':{l:14,t:8},  '22':{l:14,t:15}, '21':{l:14,t:22}, '20':{l:14,t:29},
-  '19':{l:14,t:36}, '18':{l:14,t:43}, '17':{l:14,t:50}, '16':{l:14,t:57},
-  '15':{l:14,t:64}, '14':{l:14,t:71}, '13':{l:14,t:78}, '12':{l:14,t:85},
-
-  // Middle Column (Straight line down)
-  '24':{l:42,t:8},  '25':{l:42,t:15}, '1' :{l:42,t:22}, '1A':{l:42,t:29},
-  '2' :{l:42,t:36}, '3' :{l:42,t:43}, '4' :{l:42,t:50}, '5' :{l:42,t:57},
-  '6' :{l:42,t:64}, '7' :{l:42,t:71}, '8' :{l:42,t:78}, '9' :{l:42,t:85},
-
-  // Extra spots tucked neatly at the top/bottom edges
-  '10':{l:28,t:85}, '11':{l:56,t:85},
-  '26':{l:28,t:8},  '27':{l:56,t:8},
-
-  // B series — Stacked perfectly vertically like your image
-  '5B':{l:58,t:74},
-  '4B':{l:58,t:80},
-  '3B':{l:58,t:86},
-  '2B':{l:58,t:92},
-  '1B':{l:58,t:98},
+  // Left Column (12-23)
+  '23':{x:65,y:20}, '22':{x:65,y:60}, '21':{x:65,y:100}, '20':{x:65,y:140},
+  '19':{x:65,y:180},'18':{x:65,y:220},'17':{x:65,y:260},'16':{x:65,y:300},
+  '15':{x:65,y:340},'14':{x:65,y:380},'13':{x:65,y:420},'12':{x:120,y:420},
+  // Right Column (1-9)
+  '1': {x:150,y:20},'1A':{x:150,y:60},'2': {x:150,y:100},'3': {x:150,y:140},
+  '4': {x:150,y:180},'5': {x:150,y:220},'6': {x:150,y:260},'7': {x:150,y:300},
+  '8': {x:150,y:340},'9': {x:150,y:380},
+  // B-Series Bottom Right
+  '5B':{x:240,y:390},'4B':{x:200,y:390},'3B':{x:240,y:430},'2B':{x:200,y:430},'1B':{x:160,y:430},
+  // Top horizontal row
+  '24':{x:200,y:20},'25':{x:245,y:20},'26':{x:15,y:200},'27':{x:15,y:240}
 };
 
 function buildApron(){
@@ -321,14 +289,13 @@ function buildApron(){
     b.className='lot'+(isB?' b-lot':'');
     b.dataset.lot=lot;
     b.textContent=lot;
-    b.style.left=pos.l+'%';
-    b.style.top=pos.t+'%';
+    b.style.left=pos.x+'px';
+    b.style.top=pos.y+'px';
     b.addEventListener('click',()=>selectLot(b));
     overlay.appendChild(b);
   });
 }
 
-// ── Queue ──
 function getQueue(){try{return JSON.parse(localStorage.getItem(STORE_QUEUE)||'[]');}catch{return[];}}
 function saveQueue(q){localStorage.setItem(STORE_QUEUE,JSON.stringify(q));}
 function pushToQueue(s){const q=getQueue();q.push(s);saveQueue(q);updateSyncUI();}
@@ -343,7 +310,6 @@ function updateSyncUI(){
   else qb.classList.remove('show');
 }
 
-// ── Boot ──
 window.addEventListener('load',()=>{
   updateSyncUI();
   buildApron();
@@ -355,7 +321,6 @@ window.addEventListener('load',()=>{
   }
 });
 
-// ── Setup ──
 async function connectScript(){
   const url=document.getElementById('scriptUrl').value.trim();
   const err=document.getElementById('setupErr');
@@ -367,7 +332,6 @@ async function connectScript(){
     const res=await fetch(url+'?action=headers');
     const data=await res.json();
     if(data.error)throw new Error(data.error);
-    if(!data.actions?.length)throw new Error('No actions found');
     localStorage.setItem(STORE_URL,url);
     SCRIPT_URL=url;actions=data.actions;
     localStorage.setItem(STORE_ACTIONS,JSON.stringify(actions));
@@ -379,12 +343,10 @@ async function loadHeaders(){
   try{
     const res=await fetch(SCRIPT_URL+'?action=headers');
     const data=await res.json();
-    if(data.error)throw new Error(data.error);
     actions=data.actions;localStorage.setItem(STORE_ACTIONS,JSON.stringify(actions));buildGrid();
-  }catch(e){console.log('Using cached actions');}
+  }catch(e){}
 }
 
-// ── Grid ──
 function buildGrid(){
   const g=document.getElementById('grid');g.innerHTML='';
   actions.forEach((a,i)=>{
@@ -396,7 +358,6 @@ function buildGrid(){
   });
 }
 
-// ── Timer ──
 function startTimer(){
   if(running)return;
   clearTimeout(saveUnlockTimer);hideFinish();
@@ -405,8 +366,15 @@ function startTimer(){
   ival=setInterval(()=>{document.getElementById('timer').textContent=fmt(performance.now()-t0);},41);
   document.getElementById('timer').className='run';setStatus('run');
   document.getElementById('btnGo').disabled=true;document.getElementById('btnStop').disabled=false;
-  actions.forEach((_,i)=>{const b=document.getElementById('ab'+i);b.className='act';b.disabled=false;document.getElementById('as'+i).textContent='';const n=b.querySelector('.act-num');if(n)n.remove();});
+  actions.forEach((_,i)=>{
+    const b=document.getElementById('ab'+i);
+    b.className='act'; // Reset to base state
+    b.disabled=false;
+    document.getElementById('as'+i).textContent='';
+    const n=b.querySelector('.act-num');if(n)n.remove();
+  });
 }
+
 function stopTimer(){
   if(!running)return;
   running=false;clearInterval(ival);ival=null;
@@ -416,14 +384,15 @@ function stopTimer(){
   if(splits.length>0){
     const btn=document.getElementById('btnFinish');
     btn.textContent='✈ Finish Route';btn.classList.add('show');btn.classList.remove('ready');
-    btn.style.pointerEvents='none';btn.style.opacity='.45';
-    saveUnlockTimer=setTimeout(()=>{btn.classList.add('ready');btn.style.pointerEvents='';btn.style.opacity='';},400);
+    saveUnlockTimer=setTimeout(()=>{btn.classList.add('ready');btn.style.pointerEvents='auto';btn.style.opacity='1';},400);
   }
 }
+
 function hideFinish(){
   const btn=document.getElementById('btnFinish');
   btn.classList.remove('show','ready');btn.style.pointerEvents='none';btn.style.opacity='.45';
 }
+
 function tapAction(i){
   if(!running)return;
   const now=performance.now(),delta=now-lastTap;lastTap=now;tapN++;
@@ -437,133 +406,86 @@ function tapAction(i){
   badge.textContent='#'+tapN;
 }
 
-// ── Route Modal ──
 function openRouteModal(){
-  saving=false;
-  selTaxi=null;selLot=null;
+  saving=false;selTaxi=null;selLot=null;
   document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('selected'));
   document.querySelectorAll('.lot').forEach(b=>b.classList.remove('selected'));
   const saveBtn=document.getElementById('btnModalSave');
   saveBtn.classList.remove('ready');saveBtn.textContent='Save to Sheet';
-  saveBtn.style.pointerEvents='none';
   updateRouteSummary();
   document.getElementById('routeModal').classList.add('show');
 }
-function closeRouteModal(){
-  saving=false;
-  document.getElementById('routeModal').classList.remove('show');
-}
+
+function closeRouteModal(){document.getElementById('routeModal').classList.remove('show');}
 
 function selectTaxi(btn){
-  selTaxi=btn.dataset.taxi;
-  if(btn.classList.contains('selected')){
-    btn.classList.remove('selected');selTaxi=null;
-  } else {
-    document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('selected'));
-    btn.classList.add('selected');
-  }
+  if(btn.classList.contains('selected')){btn.classList.remove('selected');selTaxi=null;} 
+  else {document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selTaxi=btn.dataset.taxi;}
   updateRouteSummary();updateModalSaveBtn();
 }
 
 function selectLot(btn){
-  selLot=btn.dataset.lot;
-  if(btn.classList.contains('selected')){
-    btn.classList.remove('selected');selLot=null;
-  } else {
-    document.querySelectorAll('.lot').forEach(b=>b.classList.remove('selected'));
-    btn.classList.add('selected');
-  }
+  if(btn.classList.contains('selected')){btn.classList.remove('selected');selLot=null;}
+  else {document.querySelectorAll('.lot').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selLot=btn.dataset.lot;}
   updateRouteSummary();updateModalSaveBtn();
 }
 
 function updateRouteSummary(){
   const el=document.getElementById('routeSummary');
   if(!selTaxi&&!selLot){el.innerHTML='<span style="color:var(--muted)">Select Taxi Point → Parking Lot</span>';return;}
-  const t=selTaxi?`<span class="rs-taxi">${selTaxi}</span>`:'<span style="color:var(--muted)">?</span>';
-  const l=selLot?`<span class="rs-lot">${selLot}</span>`:'<span style="color:var(--muted)">?</span>';
-  el.innerHTML=`Taxi&nbsp;${t}&nbsp;<span style="color:var(--muted)">→</span>&nbsp;Lot&nbsp;${l}`;
-}
-function updateModalSaveBtn(){
-  const btn=document.getElementById('btnModalSave');
-  if(selTaxi&&selLot){btn.classList.add('ready');btn.style.pointerEvents='';}
-  else{btn.classList.remove('ready');btn.style.pointerEvents='none';}
+  const t=selTaxi?`<span class="rs-taxi">${selTaxi}</span>`:'?';
+  const l=selLot?`<span class="rs-lot">${selLot}</span>`:'?';
+  el.innerHTML=`Taxi ${t} → Lot ${l}`;
 }
 
-// ── Save ──
+function updateModalSaveBtn(){
+  const btn=document.getElementById('btnModalSave');
+  if(selTaxi&&selLot){btn.classList.add('ready');btn.style.pointerEvents='auto';btn.style.opacity='1';}
+  else{btn.classList.remove('ready');btn.style.pointerEvents='none';btn.style.opacity='.3';}
+}
+
 async function doSave(){
   if(saving)return;
   const btn=document.getElementById('btnModalSave');
-  if(!selTaxi||!selLot)return;
-
   saving=true;
-  btn.textContent='Saving…';btn.style.pointerEvents='none';btn.style.opacity='.6';
-
+  btn.textContent='Saving…';
   const session={startTimeISO:sessionISO,splits:[...splits],taxiPoint:selTaxi,parkLot:selLot};
-
-  let savedOk=false;
-  let savedRow=null;
-
   try{
-    const controller=new AbortController();
-    const timeoutId=setTimeout(()=>controller.abort(),8000);
-    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session),signal:controller.signal});
-    clearTimeout(timeoutId);
+    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session)});
     const data=await res.json();
-    if(data.error)throw new Error(data.error);
-    savedOk=true;savedRow=data.row;
+    showToast('✓ Saved to Sheet','ok');
   }catch(e){
-    savedOk=false;
-  }
-
-  saving=false;
-  closeRouteModal();
-
-  if(savedOk){
-    showToast('✓ Saved to row '+savedRow,'ok');
-  }else{
     pushToQueue(session);
-    showToast('Offline — queued ('+getQueue().length+' pending)','info');
+    showToast('Offline — queued','info');
   }
-
-  setTimeout(resetAll,1400);
+  closeRouteModal();
+  setTimeout(resetAll,1000);
 }
 
-// ── Sync ──
 async function syncQueue(){
   const q=getQueue();
-  if(q.length===0){showToast('Nothing to sync','info');return;}
+  if(!q.length)return;
   const sb=document.getElementById('btnSync');sb.disabled=true;
-  showToast('Syncing '+q.length+'…','info');
-  let saved=0,failed=[];
-  for(const session of q){
-    try{
-      const controller=new AbortController();
-      const tid=setTimeout(()=>controller.abort(),8000);
-      const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session),signal:controller.signal});
-      clearTimeout(tid);
-      const data=await res.json();
-      if(data.error)throw new Error(data.error);
-      saved++;
-    }catch(e){failed.push(session);}
+  let failed=[];
+  for(const s of q){
+    try{await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(s)});}
+    catch(e){failed.push(s);}
   }
   saveQueue(failed);updateSyncUI();sb.disabled=false;
-  if(failed.length===0)showToast('✓ All '+saved+' synced!','ok');
-  else showToast('Synced '+saved+', '+failed.length+' failed','er');
+  showToast(failed.length?'Sync Failed':'✓ Synced All','info');
 }
 
-// ── Reset ──
 function resetAll(){
-  clearTimeout(saveUnlockTimer);clearInterval(ival);ival=null;
-  running=false;saving=false;tapN=0;splits=[];t0=null;lastTap=null;selTaxi=null;selLot=null;
+  clearInterval(ival);ival=null;running=false;saving=false;splits=[];tapN=0;
   document.getElementById('timer').textContent='0:00.000';document.getElementById('timer').className='';
   document.getElementById('btnGo').disabled=false;document.getElementById('btnStop').disabled=true;
   hideFinish();setStatus('');updateSyncUI();
-  actions.forEach((_,i)=>{const b=document.getElementById('ab'+i);b.className='act';b.disabled=true;document.getElementById('as'+i).textContent='';const n=b.querySelector('.act-num');if(n)n.remove();});
+  actions.forEach((_,i)=>{const b=document.getElementById('ab'+i);b.className='act';b.disabled=true;document.getElementById('as'+i).textContent='';});
 }
 
 function fmt(ms){const t=Math.round(ms);return`${Math.floor(t/60000)}:${String(Math.floor((t%60000)/1000)).padStart(2,'0')}.${String(t%1000).padStart(3,'0')}`;}
 function setStatus(type){document.getElementById('spill').className='spill'+(type?' '+type:'');document.getElementById('sdot').className='sdot'+(type==='run'?' live':type==='stp'?' dead':'');document.getElementById('sTxt').textContent=type==='run'?'Running':type==='stp'?'Stopped':'Ready';}
-function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>{t.className='toast '+type;},3200);}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>{t.className='toast '+type;},3000);}
 </script>
 </body>
 </html>
