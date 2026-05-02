@@ -85,22 +85,45 @@ body {
 #app { display:none; flex-direction:column; height:100%; overflow:hidden; }
 #app.show { display:flex; }
 
-/* ── TOP BAR — no icon, just text brand + status ── */
+/* ── TOP BAR ──
+   Left:  big timer (replaces brand text)
+   Right: status pill + queue badge on same line
+*/
 .topbar {
   flex-shrink:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:max(env(safe-area-inset-top),10px) 14px 5px;
+  padding:max(env(safe-area-inset-top),10px) 14px 6px;
+  border-bottom:1px solid var(--border);
   background:var(--bg);
+  gap:10px;
 }
-.b-name { font-size:13px; font-weight:800; letter-spacing:-0.3px; }
-.b-name em { font-style:normal; color:var(--accent2); }
+
+/* Timer — now lives in topbar, prominent but compact */
+.timer-block { display:flex; flex-direction:column; }
+.elapsed-lbl {
+  font-size:8px; font-weight:600;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--muted); line-height:1; margin-bottom:1px;
+}
+#timer {
+  font-size:26px; font-weight:800;
+  letter-spacing:-0.5px; font-variant-numeric:tabular-nums;
+  color:var(--off); line-height:1.1; transition:color 0.2s;
+}
+#timer.run { color:var(--green); }
+#timer.stp { color:var(--red); }
+
+/* Right side of topbar — status + queue badge on same row */
+.topbar-right {
+  display:flex; align-items:center; gap:6px; flex-shrink:0;
+}
 
 .spill {
   display:flex; align-items:center; gap:5px;
   padding:4px 9px; border-radius:50px;
   background:var(--bg3); border:1px solid var(--border);
   font-size:10px; font-weight:600; letter-spacing:0.4px; text-transform:uppercase;
-  color:var(--muted); transition:all 0.25s;
+  color:var(--muted); transition:all 0.25s; white-space:nowrap;
 }
 .spill.run { background:rgba(34,197,94,0.12); border-color:rgba(34,197,94,0.3); color:var(--green); }
 .spill.stp { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3); color:var(--red); }
@@ -109,48 +132,17 @@ body {
 .sdot.dead { background:var(--red); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-/* ── MINI TIMER ROW ── */
-.timerrow {
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:2px 14px 5px;
-  border-bottom:1px solid var(--border);
-  background:var(--bg);
-  gap:10px;
-}
-.elapsed-lbl { font-size:8px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
-#timer {
-  font-size:22px; font-weight:800; letter-spacing:-0.5px;
-  font-variant-numeric:tabular-nums; color:var(--off); line-height:1.1;
-  transition:color 0.2s;
-}
-#timer.run { color:var(--green); }
-#timer.stp { color:var(--red); }
-
-/* Right side: queue badge + split info on same line */
-.timerrow-right {
-  display:flex; align-items:center; gap:6px;
-  flex:1; justify-content:flex-end; overflow:hidden;
-}
-
-#splitInfo {
-  font-size:11px; font-weight:600; color:var(--muted);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  max-width:160px;
-}
-.si-name { color:var(--accent2); }
-.si-time { font-variant-numeric:tabular-nums; color:var(--off); }
-
-/* Queue badge */
+/* Queue badge — same line as status, top right */
 #queueBadge {
   display:none; align-items:center; gap:4px;
-  padding:3px 7px; border-radius:50px; flex-shrink:0;
+  padding:4px 8px; border-radius:50px;
   background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.35);
   font-size:10px; font-weight:700; color:var(--purple);
-  cursor:pointer; white-space:nowrap;
+  cursor:pointer; white-space:nowrap; touch-action:manipulation;
 }
 #queueBadge.show { display:flex; }
-.qb-dot { width:5px; height:5px; border-radius:50%; background:var(--purple); animation:blink 1.4s infinite; }
+#queueBadge:active { opacity:0.7; }
+.qb-dot { width:5px; height:5px; border-radius:50%; background:var(--purple); animation:blink 1.4s infinite; flex-shrink:0; }
 
 /* ══════════════════════════
    GRID — fills ALL remaining space
@@ -177,6 +169,7 @@ body {
   transition:transform 0.1s, background 0.15s, border-color 0.15s;
   background-image:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%);
   width:100%; height:100%;
+  touch-action:manipulation;
 }
 .act:disabled { opacity:0.13; cursor:not-allowed; }
 .act:not(:disabled):active { transform:scale(0.90); }
@@ -193,12 +186,7 @@ body {
   background:var(--bg); border-top:1px solid var(--border);
 }
 
-/*
-  Save button — CRITICAL:
-  pointer-events:none by default so it can NEVER be tapped accidentally.
-  Only becomes tappable 400ms after Stop is pressed via JS.
-  This is the main fix for the accidental save bug.
-*/
+/* Save button — locked by default, unlocked 400ms after Stop */
 #btnSave {
   display:none;
   width:100%; padding:14px; margin-bottom:7px;
@@ -207,17 +195,15 @@ body {
   color:#fff; font-size:15px; font-weight:700;
   cursor:pointer;
   box-shadow:0 4px 18px rgba(59,130,246,0.3);
-  transition:all 0.15s;
-  pointer-events:none;   /* blocked until unlocked by JS */
-  opacity:0.5;           /* visually dim until ready */
+  transition:opacity 0.2s;
+  pointer-events:none;
+  opacity:0.45;
+  touch-action:manipulation;
 }
-#btnSave.show { display:block; }
-#btnSave.ready {
-  pointer-events:auto;   /* unlocked */
-  opacity:1;
-}
-#btnSave:not(:disabled):active { transform:scale(0.97); opacity:0.9; }
-#btnSave:disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+#btnSave.show   { display:block; }
+#btnSave.ready  { pointer-events:auto; opacity:1; }
+#btnSave.saving { pointer-events:none; opacity:0.5; }
+#btnSave:active { opacity:0.85; }
 
 .ctrl { display:grid; grid-template-columns:1fr 1fr auto; gap:7px; }
 
@@ -227,22 +213,19 @@ body {
   cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:5px;
   transition:all 0.15s;
-  /* prevent any accidental double-fire */
   touch-action:manipulation;
 }
 #btnGo:disabled,#btnStop:disabled,#btnSync:disabled { opacity:0.2; cursor:not-allowed; }
 #btnGo:not(:disabled):active,#btnStop:not(:disabled):active { transform:scale(0.94); }
 
-#btnGo { background:var(--green); color:#fff; box-shadow:0 4px 16px rgba(34,197,94,0.28); }
+#btnGo   { background:var(--green); color:#fff; box-shadow:0 4px 16px rgba(34,197,94,0.28); }
 #btnStop { background:var(--bg3); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
 #btnStop:not(:disabled):hover { background:rgba(239,68,68,0.1); }
 
 #btnSync {
   width:52px; flex-shrink:0;
   background:var(--bg3); border:1px solid rgba(168,85,247,0.2);
-  color:var(--purple);
-  flex-direction:column; gap:1px; font-size:11px;
-  touch-action:manipulation;
+  color:var(--purple); flex-direction:column; gap:1px; font-size:11px;
 }
 #btnSync.has-queue { border-color:rgba(168,85,247,0.45); background:rgba(168,85,247,0.1); animation:syncpulse 2s infinite; }
 @keyframes syncpulse { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)} 50%{box-shadow:0 0 0 5px rgba(168,85,247,0.15)} }
@@ -253,7 +236,7 @@ body {
 /* ── Toast ── */
 .toast {
   position:fixed;
-  bottom:calc(env(safe-area-inset-bottom) + 75px); left:50%;
+  bottom:calc(env(safe-area-inset-bottom)+75px); left:50%;
   transform:translateX(-50%) translateY(10px);
   padding:10px 20px; border-radius:50px;
   font-size:13px; font-weight:600;
@@ -286,34 +269,31 @@ body {
 <!-- MAIN APP -->
 <div id="app">
 
+  <!-- Top bar: timer left | status + queue right -->
   <div class="topbar">
-    <div class="b-name">FTS <em>Arrival</em></div>
-    <div class="spill" id="spill">
-      <div class="sdot" id="sdot"></div>
-      <span id="sTxt">Ready</span>
-    </div>
-  </div>
-
-  <div class="timerrow">
-    <div>
+    <div class="timer-block">
       <div class="elapsed-lbl">Elapsed</div>
       <div id="timer">0:00.000</div>
     </div>
-    <div class="timerrow-right">
+    <div class="topbar-right">
       <div id="queueBadge" onclick="syncQueue()">
         <div class="qb-dot"></div>
         <span id="queueBadgeTxt">0</span>
       </div>
-      <div id="splitInfo"><span style="color:var(--muted)">—</span></div>
+      <div class="spill" id="spill">
+        <div class="sdot" id="sdot"></div>
+        <span id="sTxt">Ready</span>
+      </div>
     </div>
   </div>
 
+  <!-- Grid -->
   <div class="grid-wrap">
     <div id="grid"></div>
   </div>
 
+  <!-- Bottom -->
   <div class="btm">
-    <!-- Save button — starts blocked, unlocked 400ms after Stop -->
     <button id="btnSave" onclick="doSave()">✈ Save to Sheet</button>
     <div class="ctrl">
       <button id="btnGo"   onclick="startTimer()">▶ Start</button>
@@ -335,14 +315,14 @@ let SCRIPT_URL = localStorage.getItem(STORE_URL) || '';
 
 let actions=[], splits=[], running=false, saving=false;
 let t0=null, lastTap=null, ival=null, sessionISO=null, tapN=0;
-let saveUnlockTimer=null; // timer that unlocks Save button after Stop
+let saveUnlockTimer=null;
 
 // ── Queue helpers ──
 function getQueue(){ try{return JSON.parse(localStorage.getItem(STORE_QUEUE)||'[]');}catch{return[];} }
 function saveQueue(q){ localStorage.setItem(STORE_QUEUE,JSON.stringify(q)); }
 function pushToQueue(s){ const q=getQueue(); q.push(s); saveQueue(q); updateSyncUI(); }
 function updateSyncUI(){
-  const q=getQueue(); const n=q.length;
+  const n=getQueue().length;
   const sc=document.getElementById('syncCount');
   const sb=document.getElementById('btnSync');
   const qb=document.getElementById('queueBadge');
@@ -369,8 +349,7 @@ async function connectScript(){
     const data=await res.json();
     if(data.error) throw new Error(data.error);
     if(!data.actions?.length) throw new Error('No actions found');
-    localStorage.setItem(STORE_URL,url);
-    SCRIPT_URL=url; actions=data.actions;
+    localStorage.setItem(STORE_URL,url); SCRIPT_URL=url; actions=data.actions;
     showApp(); buildGrid();
   }catch(e){ err.textContent='Failed: '+e.message; err.classList.add('show'); btn.textContent='Connect & Load'; }
 }
@@ -399,10 +378,8 @@ function buildGrid(){
 // ── Start ──
 function startTimer(){
   if(running) return;
-  // Cancel any pending save-unlock from a previous stop
   clearTimeout(saveUnlockTimer);
-  lockSaveButton();
-
+  hideSave();
   running=true; saving=false;
   t0=lastTap=performance.now();
   sessionISO=new Date().toISOString();
@@ -412,8 +389,6 @@ function startTimer(){
   setStatus('run');
   document.getElementById('btnGo').disabled=true;
   document.getElementById('btnStop').disabled=false;
-  document.getElementById('btnSave').classList.remove('show');
-  setSplit(null,null);
   actions.forEach((_,i)=>{
     const b=document.getElementById('ab'+i);
     b.className='act'; b.disabled=false;
@@ -422,41 +397,33 @@ function startTimer(){
   });
 }
 
-// ── Stop — completely separated from Save ──
+// ── Stop — fully separated from Save ──
 function stopTimer(){
   if(!running) return;
-
-  // 1. Immediately kill the timer
   running=false;
   clearInterval(ival); ival=null;
-
-  // 2. Update UI
   document.getElementById('timer').className='stp';
   setStatus('stp');
   document.getElementById('btnGo').disabled=false;
   document.getElementById('btnStop').disabled=true;
   actions.forEach((_,i)=>document.getElementById('ab'+i).disabled=true);
 
-  // 3. Show Save button BUT keep it locked (pointer-events:none, dim)
-  //    for 400ms so any lingering touch from Stop cannot hit Save
   if(splits.length>0){
-    document.getElementById('btnSave').classList.add('show');
-    setSplit(null, splits.length+' split'+(splits.length>1?'s':'')+' — tap Save');
-    // Unlock Save only after 400ms delay
-    saveUnlockTimer=setTimeout(()=>{ unlockSaveButton(); }, 400);
-  } else {
-    setSplit(null,'No splits');
+    // Show Save but keep locked — unlocks after 400ms
+    const btn=document.getElementById('btnSave');
+    btn.textContent='✈ Save to Sheet';
+    btn.classList.add('show');
+    btn.classList.remove('ready','saving');
+    btn.disabled=false;
+    saveUnlockTimer=setTimeout(()=>{ btn.classList.add('ready'); },400);
   }
 }
 
-function lockSaveButton(){
+function hideSave(){
   const btn=document.getElementById('btnSave');
-  btn.classList.remove('ready');
-  btn.classList.remove('show');
-}
-function unlockSaveButton(){
-  const btn=document.getElementById('btnSave');
-  btn.classList.add('ready');
+  btn.classList.remove('show','ready','saving');
+  btn.disabled=false;
+  btn.textContent='✈ Save to Sheet';
 }
 
 // ── Tap action ──
@@ -474,29 +441,25 @@ function tapAction(i){
   let badge=btn.querySelector('.act-num');
   if(!badge){badge=document.createElement('span');badge.className='act-num';btn.appendChild(badge);}
   badge.textContent='#'+tapN;
-  setSplit(name,fmt(delta));
 }
 
-function setSplit(name,val){
-  const el=document.getElementById('splitInfo');
-  if(name&&val) el.innerHTML=`<span class="si-name">${name}</span> <span class="si-time">${val}</span>`;
-  else if(val)  el.innerHTML=`<span style="color:var(--muted);font-size:11px;">${val}</span>`;
-  else          el.innerHTML=`<span style="color:var(--muted)">—</span>`;
-}
-
-// ── Save ──
+// ── Save — the bug was: after offline queue, saving flag stayed true
+//    and button was never reset. Fixed by always resetting in finally. ──
 async function doSave(){
-  // Hard guards — multiple layers
+  const btn=document.getElementById('btnSave');
+  // Hard guards
   if(saving) return;
   if(running) return;
-  const btn=document.getElementById('btnSave');
-  if(!btn.classList.contains('ready')) return; // still locked
+  if(!btn.classList.contains('ready')) return;
   if(splits.length===0) return;
 
   saving=true;
-  btn.disabled=true; btn.textContent='Saving…';
+  btn.classList.add('saving');
+  btn.classList.remove('ready');
+  btn.textContent='Saving…';
 
-  const session={startTimeISO:sessionISO,splits:[...splits]};
+  const session={startTimeISO:sessionISO, splits:[...splits]};
+
   try{
     const res=await Promise.race([
       fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session)}),
@@ -504,13 +467,16 @@ async function doSave(){
     ]);
     const data=await res.json();
     if(data.error) throw new Error(data.error);
+    // ✅ Online save success
     showToast('✓ Saved to row '+data.row,'ok');
     setTimeout(resetAll,1400);
   }catch(e){
+    // ✅ Offline — queue it, then FULLY reset so next save works
     pushToQueue(session);
     showToast('Offline — queued ('+getQueue().length+' pending)','info');
     setTimeout(resetAll,1800);
   }
+  // saving flag is reset inside resetAll — no need here
 }
 
 // ── Sync offline queue ──
@@ -534,21 +500,21 @@ async function syncQueue(){
   }
   saveQueue(failed); updateSyncUI(); syncBtn.disabled=false;
   if(failed.length===0) showToast('✓ All '+saved+' synced!','ok');
-  else showToast('Synced '+saved+', '+failed.length+' failed','er');
+  else showToast('Synced '+saved+', '+failed.length+' still failed','er');
 }
 
-// ── Reset ──
+// ── Reset — always brings app back to clean state ──
 function resetAll(){
   clearTimeout(saveUnlockTimer);
   clearInterval(ival); ival=null;
-  running=false; saving=false; tapN=0;
+  running=false; saving=false; tapN=0;  // ← saving=false here is the key fix
   splits=[]; t0=null; lastTap=null;
   document.getElementById('timer').textContent='0:00.000';
   document.getElementById('timer').className='';
   document.getElementById('btnGo').disabled=false;
   document.getElementById('btnStop').disabled=true;
-  lockSaveButton();
-  setSplit(null,null); setStatus('');
+  hideSave();
+  setStatus('');
   updateSyncUI();
   actions.forEach((_,i)=>{
     const b=document.getElementById('ab'+i);
