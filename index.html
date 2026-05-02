@@ -164,7 +164,7 @@ let actions = [], splits = [], running = false, saving = false;
 let t0 = 0, lastTap = 0, ival = null, sessionISO = null, tapN = 0;
 let selTaxi = null, selLot = null;
 
-// NEW MAP LAYOUT DATA
+// HIGH-DETAIL COORDINATE MAP[cite: 5]
 const LOT_POS = {
   '23':{x:110,y:60},'22':{x:110,y:105},'21':{x:110,y:150},'20':{x:110,y:195},'19':{x:110,y:240},
   '18':{x:135,y:330},'17':{x:135,y:375},'16':{x:135,y:420},'15':{x:135,y:465},'14':{x:135,y:510},'13':{x:135,y:555},'12':{x:135,y:600},
@@ -242,10 +242,10 @@ function tap(i) {
 }
 
 function openRouteModal() {
-  // CRITICAL: Force reset of save button state every time modal opens
   selTaxi = null; selLot = null; saving = false;
   document.querySelectorAll('.taxi-btn, .lot').forEach(b=>b.classList.remove('selected'));
   const btn = document.getElementById('btnModalSave');
+  // Reset Save button UI[cite: 4]
   btn.classList.remove('ready'); 
   btn.style.pointerEvents = 'none'; 
   btn.style.opacity = '.3';
@@ -263,13 +263,9 @@ function selectTaxi(btn) {
 function checkReady() {
   const b = document.getElementById('btnModalSave');
   if(selTaxi && selLot) {
-    b.classList.add('ready'); 
-    b.style.pointerEvents = 'auto'; 
-    b.style.opacity = '1';
+    b.classList.add('ready'); b.style.pointerEvents = 'auto'; b.style.opacity = '1';
   } else {
-    b.classList.remove('ready'); 
-    b.style.pointerEvents = 'none';
-    b.style.opacity = '.3';
+    b.classList.remove('ready'); b.style.pointerEvents = 'none'; b.style.opacity = '.3';
   }
 }
 
@@ -283,7 +279,7 @@ async function doSave() {
   
   try {
     const ctrl = new AbortController(); 
-    const tid = setTimeout(() => ctrl.abort(), 8000); // 8s Timeout
+    const tid = setTimeout(() => ctrl.abort(), 8000); // 8-second safety timeout[cite: 1, 2]
     await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify(data), signal: ctrl.signal});
     clearTimeout(tid);
     toast('✓ Saved Successfully');
@@ -294,7 +290,7 @@ async function doSave() {
     toast('Saved Offline');
   }
   
-  saving = false; // Unlock for next session
+  saving = false; 
   closeRouteModal(); 
   reset();
 }
