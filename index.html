@@ -33,7 +33,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .s-title{font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;}
 .s-title span{color:var(--accent2);}
 .s-desc{font-size:13px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:22px;max-width:280px;}
-.s-lbl{width:100%;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
 .s-inp{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--white);font-size:13px;font-weight:500;margin-bottom:12px;outline:none;transition:border-color .2s;-webkit-user-select:text;user-select:text;}
 .s-btn{width:100%;padding:14px;border-radius:13px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;}
 
@@ -165,6 +164,7 @@ let actions = [], splits = [], running = false, saving = false;
 let t0 = 0, lastTap = 0, ival = null, sessionISO = null, tapN = 0;
 let selTaxi = null, selLot = null;
 
+// NEW MAP LAYOUT DATA
 const LOT_POS = {
   '23':{x:110,y:60},'22':{x:110,y:105},'21':{x:110,y:150},'20':{x:110,y:195},'19':{x:110,y:240},
   '18':{x:135,y:330},'17':{x:135,y:375},'16':{x:135,y:420},'15':{x:135,y:465},'14':{x:135,y:510},'13':{x:135,y:555},'12':{x:135,y:600},
@@ -242,9 +242,14 @@ function tap(i) {
 }
 
 function openRouteModal() {
+  // CRITICAL: Force reset of save button state every time modal opens
   selTaxi = null; selLot = null; saving = false;
   document.querySelectorAll('.taxi-btn, .lot').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('btnModalSave').classList.remove('ready');
+  const btn = document.getElementById('btnModalSave');
+  btn.classList.remove('ready'); 
+  btn.style.pointerEvents = 'none'; 
+  btn.style.opacity = '.3';
+  btn.textContent = 'Save to Sheet';
   document.getElementById('routeModal').classList.add('show');
 }
 
@@ -257,26 +262,46 @@ function selectTaxi(btn) {
 
 function checkReady() {
   const b = document.getElementById('btnModalSave');
-  if(selTaxi && selLot) b.classList.add('ready'); else b.classList.remove('ready');
+  if(selTaxi && selLot) {
+    b.classList.add('ready'); 
+    b.style.pointerEvents = 'auto'; 
+    b.style.opacity = '1';
+  } else {
+    b.classList.remove('ready'); 
+    b.style.pointerEvents = 'none';
+    b.style.opacity = '.3';
+  }
 }
 
 async function doSave() {
-  if(saving) return; saving = true;
-  const btn = document.getElementById('btnModalSave'); btn.textContent = 'Saving...';
+  if(saving) return; 
+  saving = true;
+  const btn = document.getElementById('btnModalSave'); 
+  btn.textContent = 'Saving...'; btn.style.pointerEvents = 'none';
+  
   const data = {startTimeISO: sessionISO, splits, taxiPoint: selTaxi, parkLot: selLot};
+  
   try {
-    const ctrl = new AbortController(); setTimeout(()=>ctrl.abort(), 8000);
+    const ctrl = new AbortController(); 
+    const tid = setTimeout(() => ctrl.abort(), 8000); // 8s Timeout
     await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify(data), signal: ctrl.signal});
+    clearTimeout(tid);
     toast('✓ Saved Successfully');
   } catch(e) {
-    let q = JSON.parse(localStorage.getItem('fts_q') || '[]'); q.push(data);
-    localStorage.setItem('fts_q', JSON.stringify(q)); toast('Saved Offline');
+    let q = JSON.parse(localStorage.getItem('fts_q') || '[]'); 
+    q.push(data);
+    localStorage.setItem('fts_q', JSON.stringify(q)); 
+    toast('Saved Offline');
   }
-  closeRouteModal(); reset();
+  
+  saving = false; // Unlock for next session
+  closeRouteModal(); 
+  reset();
 }
 
 function reset() {
-  document.getElementById('timer').textContent = '0:00.000'; document.getElementById('timer').className = '';
+  document.getElementById('timer').textContent = '0:00.000'; 
+  document.getElementById('timer').className = '';
   document.getElementById('btnFinish').classList.remove('show');
   actions.forEach((_,i) => { const b = document.getElementById('ab'+i); b.className='act'; b.disabled=true; });
 }
