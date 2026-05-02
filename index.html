@@ -111,7 +111,6 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .taxi-btn::before{content:'TAXI';position:absolute;top:5px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(249,115,22,.45);}
 .taxi-btn:active{transform:scale(.93);}
 .taxi-btn.selected{background:rgba(249,115,22,.2);border-color:var(--taxi);box-shadow:0 0 16px rgba(249,115,22,.25);}
-/* NOT dimmed when unselected — always tappable to switch */
 
 /* Map area */
 .map-scroll{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 10px 4px;}
@@ -120,12 +119,10 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .apron{
   position:relative;
   width:100%;
-  /* aspect ratio approx matching schematic */
   background:rgba(255,255,255,0.015);
   border-radius:14px;
   border:1px solid var(--border);
   overflow:hidden;
-  /* use SVG background for paths/buildings */
 }
 
 /* SVG map sits behind buttons */
@@ -165,16 +162,20 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
   color:var(--accent2);
   box-shadow:0 0 12px rgba(59,130,246,.4);
 }
-/* B-series lots — light blue tint */
-.lot.b-lot{
-  border-color:rgba(56,189,248,.3);
-  background:rgba(56,189,248,.1);
-  color:var(--sky);
+
+/* B-series lots — exact match to image */
+.lot.b-lot {
+  border: 2px solid #3b82f6; 
+  background: #ffffff;       
+  color: #3b82f6;            
+  font-weight: 900;
+  border-radius: 4px;        
 }
-.lot.b-lot.selected{
-  background:rgba(56,189,248,.3);
-  border-color:var(--sky);
-  box-shadow:0 0 12px rgba(56,189,248,.4);
+.lot.b-lot.selected {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;            
+  box-shadow: 0 0 16px rgba(59,130,246,0.5);
 }
 
 /* Modal save */
@@ -255,34 +256,19 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
     <div class="apron" id="apron">
       <!-- SVG schematic background -->
       <svg class="apron-svg" viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg">
-        <!-- Taxiway lines -->
+        <!-- Clean, minimalist building outlines matching your example -->
         <g stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none">
-          <!-- Main vertical taxiway -->
-          <path d="M170 10 L170 510"/>
-          <!-- Upper horizontal -->
-          <path d="M100 80 L280 80"/>
-          <!-- Mid horizontal -->
-          <path d="M60 270 L230 270"/>
-          <!-- Lower -->
-          <path d="M100 420 L280 420"/>
+          <!-- Left side thin building -->
+          <rect x="90" y="240" width="25" height="70" rx="2" />
+          
+          <!-- Right side main buildings -->
+          <rect x="220" y="80" width="70" height="110" rx="2" />
+          <rect x="220" y="200" width="70" height="30" rx="2" />
+          <rect x="220" y="240" width="70" height="130" rx="2" />
+          
+          <!-- Bottom right building (Next to B-lots) -->
+          <rect x="235" y="380" width="55" height="100" rx="2" />
         </g>
-        <!-- Taxi entry markers (orange diamonds) -->
-        <g fill="rgba(249,115,22,0.7)">
-          <polygon points="170,6 178,18 170,30 162,18" />
-          <polygon points="62,270 70,282 62,294 54,282" />
-          <polygon points="170,504 178,516 170,528 162,516" />
-        </g>
-        <!-- Buildings (semi-transparent fills) -->
-        <!-- Terminal block top right -->
-        <rect x="195" y="88" width="80" height="90" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <!-- Mid block -->
-        <rect x="195" y="190" width="50" height="40" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <!-- Lower block right -->
-        <rect x="195" y="278" width="80" height="100" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <!-- Far left block -->
-        <rect x="55" y="310" width="45" height="65" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <!-- Bottom right block (B series area) -->
-        <rect x="215" y="390" width="70" height="80" rx="4" fill="rgba(56,189,248,0.04)" stroke="rgba(56,189,248,0.12)" stroke-width="1"/>
       </svg>
       <!-- Lot buttons overlaid — positioned as % of apron container -->
       <div class="apron-overlay" id="apronOverlay"></div>
@@ -303,28 +289,27 @@ let t0=null,lastTap=null,ival=null,sessionISO=null,tapN=0,saveUnlockTimer=null;
 let selTaxi=null,selLot=null;
 
 // ── Lot positions on the apron SVG (% left, % top) ──
-// Coordinates tuned to the schematic layout
 const LOT_POSITIONS = {
-  // Left column (taxiway side) — spots 12-23
-  '23':{l:34,t:3},  '22':{l:34,t:9}, '21':{l:34,t:15}, '20':{l:34,t:21},
-  '19':{l:34,t:27}, '18':{l:34,t:33}, '17':{l:34,t:42}, '16':{l:34,t:48},
-  '15':{l:34,t:54}, '14':{l:34,t:60}, '13':{l:34,t:66}, '12':{l:34,t:72},
-  // Right column main (apron spots 1-9)
-  '1' :{l:57,t:7},  '1A':{l:57,t:14},
-  '2' :{l:57,t:21}, '3' :{l:57,t:28},
-  '4' :{l:57,t:35}, '5' :{l:57,t:42},
-  '6' :{l:57,t:49}, '7' :{l:57,t:56},
-  '8' :{l:57,t:63}, '9' :{l:57,t:70},
-  // Top row
-  '24':{l:68,t:7}, '25':{l:78,t:7},
-  // Bottom area 10-11
-  '10':{l:57,t:78}, '11':{l:57,t:85},
-  // 26-27 lower left
-  '26':{l:34,t:80}, '27':{l:34,t:87},
-  // B series — light blue, bottom right cluster
-  '5B':{l:68,t:77}, '4B':{l:68,t:83},
-  '3B':{l:68,t:89}, '2B':{l:68,t:94},
-  '1B':{l:57,t:94},
+  // Left Column (Straight line down)
+  '23':{l:14,t:8},  '22':{l:14,t:15}, '21':{l:14,t:22}, '20':{l:14,t:29},
+  '19':{l:14,t:36}, '18':{l:14,t:43}, '17':{l:14,t:50}, '16':{l:14,t:57},
+  '15':{l:14,t:64}, '14':{l:14,t:71}, '13':{l:14,t:78}, '12':{l:14,t:85},
+
+  // Middle Column (Straight line down)
+  '24':{l:42,t:8},  '25':{l:42,t:15}, '1' :{l:42,t:22}, '1A':{l:42,t:29},
+  '2' :{l:42,t:36}, '3' :{l:42,t:43}, '4' :{l:42,t:50}, '5' :{l:42,t:57},
+  '6' :{l:42,t:64}, '7' :{l:42,t:71}, '8' :{l:42,t:78}, '9' :{l:42,t:85},
+
+  // Extra spots tucked neatly at the top/bottom edges
+  '10':{l:28,t:85}, '11':{l:56,t:85},
+  '26':{l:28,t:8},  '27':{l:56,t:8},
+
+  // B series — Stacked perfectly vertically like your image
+  '5B':{l:58,t:74},
+  '4B':{l:58,t:80},
+  '3B':{l:58,t:86},
+  '2B':{l:58,t:92},
+  '1B':{l:58,t:98},
 };
 
 function buildApron(){
@@ -454,14 +439,10 @@ function tapAction(i){
 
 // ── Route Modal ──
 function openRouteModal(){
-  // CRITICAL: fully reset save state every time modal opens
   saving=false;
   selTaxi=null;selLot=null;
-  // Reset taxi buttons
   document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('selected'));
-  // Reset lot buttons
   document.querySelectorAll('.lot').forEach(b=>b.classList.remove('selected'));
-  // Reset save button
   const saveBtn=document.getElementById('btnModalSave');
   saveBtn.classList.remove('ready');saveBtn.textContent='Save to Sheet';
   saveBtn.style.pointerEvents='none';
@@ -469,14 +450,12 @@ function openRouteModal(){
   document.getElementById('routeModal').classList.add('show');
 }
 function closeRouteModal(){
-  // Reset save state on close too — ensures next open is always fresh
   saving=false;
   document.getElementById('routeModal').classList.remove('show');
 }
 
 function selectTaxi(btn){
   selTaxi=btn.dataset.taxi;
-  // Toggle: if already selected, deselect
   if(btn.classList.contains('selected')){
     btn.classList.remove('selected');selTaxi=null;
   } else {
@@ -488,7 +467,6 @@ function selectTaxi(btn){
 
 function selectLot(btn){
   selLot=btn.dataset.lot;
-  // Toggle: if already selected, deselect
   if(btn.classList.contains('selected')){
     btn.classList.remove('selected');selLot=null;
   } else {
@@ -511,9 +489,8 @@ function updateModalSaveBtn(){
   else{btn.classList.remove('ready');btn.style.pointerEvents='none';}
 }
 
-// ── Save — completely rewritten with no stuck state ──
+// ── Save ──
 async function doSave(){
-  // Prevent double tap
   if(saving)return;
   const btn=document.getElementById('btnModalSave');
   if(!selTaxi||!selLot)return;
@@ -535,11 +512,9 @@ async function doSave(){
     if(data.error)throw new Error(data.error);
     savedOk=true;savedRow=data.row;
   }catch(e){
-    // Any failure = queue it
     savedOk=false;
   }
 
-  // Always close modal and reset saving flag BEFORE showing toast/resetting
   saving=false;
   closeRouteModal();
 
