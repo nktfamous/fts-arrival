@@ -137,7 +137,7 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 #btnEdit:active{transform:scale(0.93);}
 #btnEdit.active{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:var(--accent);}
 #btnEdit:disabled{opacity:0.2;cursor:not-allowed;}
-.sync-icon,.edit-icon{font-size:18px;line-height:1;}
+.sync-icon,
 .sync-count{font-size:10px;font-weight:800;color:var(--purple);line-height:1;display:none;}
 .sync-count.show{display:block;}
 .edit-lbl{font-size:9px;font-weight:700;letter-spacing:0.5px;color:inherit;line-height:1;}
@@ -229,6 +229,20 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
 .toast.er{background:var(--red);border-color:transparent;}
 .toast.info{background:#6366f1;border-color:transparent;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Visibility toggle in edit panel */
+.vis-toggle {
+  padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);
+  background: var(--bg2); color: var(--muted);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  cursor: pointer; transition: all 0.15s; touch-action: manipulation;
+}
+.vis-toggle.on {
+  background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4);
+  color: var(--green);
+}
+.vis-toggle:active { transform: scale(0.93); }
+
 </style>
 </head>
 <body>
@@ -272,11 +286,19 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
     <div class="ctrl">
       <button id="btnMain" onclick="mainBtnClick()">▶ Start</button>
       <button id="btnSync" onclick="syncQueue()">
-        <span class="sync-icon">⇪</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 6.36-2.64L21 16"/>
+          <path d="M16 16h5v5"/>
+        </svg>
         <span class="sync-count" id="syncCount">0</span>
       </button>
       <button id="btnEdit" onclick="toggleEdit()">
-        <span class="edit-icon">✏️</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
         <span class="edit-lbl">Edit</span>
       </button>
     </div>
@@ -308,62 +330,51 @@ body{width:100%;height:100dvh;display:flex;flex-direction:column;position:fixed;
   <div class="map-area">
     <div class="map-section-lbl">Taxi Entry Point</div>
     <div class="taxi-row" id="taxiRow">
-      <button class="taxi-btn" data-v="A" onclick="selectTaxi(this)">A</button>
-      <button class="taxi-btn" data-v="C" onclick="selectTaxi(this)">C</button>
-      <button class="taxi-btn" data-v="H" onclick="selectTaxi(this)">H</button>
-    </div>
-    <div class="map-divider"></div>
-    <div class="lot-grid" id="lotGrid"></div>
-  </div>
-  <div class="modal-save-wrap">
-    <button id="btnModalSave" onclick="doSave()">Save to Sheet</button>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
+      <button class="taxi-btn" data-v="A"
 // ═══════════════════════════════════════════════
-//  CONSTANTS & KEYS
+//  CONSTANTS
 // ═══════════════════════════════════════════════
-const KEY_URL     = 'fts_url';
-const KEY_QUEUE   = 'fts_queue';
-const KEY_SLOTS   = 'fts_slots';   // 12 slot definitions [{name,img}]
-const SLOT_COUNT  = 12;
-const LOTS_MAIN   = ['1','1A','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27'];
-const LOTS_B      = ['1B','2B','3B','4B','5B'];
+const KEY_URL   = 'fts_url';
+const KEY_QUEUE = 'fts_queue';
+const KEY_SLOTS = 'fts_slots';
+const SLOT_COUNT = 12;
+const LOTS_MAIN  = ['1','1A','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27'];
+const LOTS_B     = ['1B','2B','3B','4B','5B'];
 
 let SCRIPT_URL = localStorage.getItem(KEY_URL) || '';
 let editMode   = false;
-let imgPickIdx = -1; // which slot is picking an image
+let imgPickIdx = -1;
 
-// Slot definitions — 12 fixed slots
-// Each: { name: string, img: base64|null }
-function defaultSlots() {
-  return Array.from({length:SLOT_COUNT},(_,i)=>({name:'',img:null}));
+// ─── Default slot ───
+function mkSlot(name){ return {name:name||'',img:null,visible:true}; }
+function loadSlots(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(KEY_SLOTS));
+    if(!Array.isArray(raw)) return Array.from({length:SLOT_COUNT},()=>mkSlot(''));
+    // Ensure all slots have 'visible' field (backward compat)
+    const out = Array.from({length:SLOT_COUNT},(_,i)=>{
+      const s = raw[i]||{};
+      return {name:s.name||'', img:s.img||null, visible:s.visible!==false};
+    });
+    return out;
+  } catch { return Array.from({length:SLOT_COUNT},()=>mkSlot('')); }
 }
-function loadSlots() {
-  try { return JSON.parse(localStorage.getItem(KEY_SLOTS)) || defaultSlots(); } catch { return defaultSlots(); }
-}
-function saveSlots(s) { localStorage.setItem(KEY_SLOTS,JSON.stringify(s)); }
-
+function saveSlots(s){ localStorage.setItem(KEY_SLOTS,JSON.stringify(s)); }
 let slots = loadSlots();
 
 // ═══════════════════════════════════════════════
 //  SESSION STATE
 // ═══════════════════════════════════════════════
-let S = freshState();
-function freshState() {
-  return { running:false, splits:[], t0:null, lastTap:null, ival:null, sessionISO:null, tapN:0, unlockTimer:null, taxi:null, lot:null };
-}
+let S = fresh();
+function fresh(){ return {running:false,splits:[],t0:null,lastTap:null,ival:null,sessionISO:null,tapN:0,unlockTimer:null,taxi:null,lot:null}; }
 
 // ═══════════════════════════════════════════════
 //  QUEUE
 // ═══════════════════════════════════════════════
-function qGet()   { try{return JSON.parse(localStorage.getItem(KEY_QUEUE)||'[]');}catch{return[];} }
-function qSave(q) { localStorage.setItem(KEY_QUEUE,JSON.stringify(q)); }
-function qPush(s) { const q=qGet(); q.push(s); qSave(q); qUI(); }
-function qUI() {
+function qGet(){ try{return JSON.parse(localStorage.getItem(KEY_QUEUE)||'[]');}catch{return[];} }
+function qSave(q){ localStorage.setItem(KEY_QUEUE,JSON.stringify(q)); }
+function qPush(s){ const q=qGet(); q.push(s); qSave(q); qUI(); }
+function qUI(){
   const n=qGet().length;
   document.getElementById('syncCount').textContent=n;
   document.getElementById('syncCount').className=n>0?'sync-count show':'sync-count';
@@ -374,48 +385,86 @@ function qUI() {
 }
 
 // ═══════════════════════════════════════════════
-//  NETWORK — clean isolated function
+//  NETWORK — robust online detection
 // ═══════════════════════════════════════════════
-async function sendSession(session) {
-  const ctrl=new AbortController();
-  const tid=setTimeout(()=>ctrl.abort(),6000);
+// We use three-tier approach:
+// 1. navigator.onLine (instant, but can false-positive)
+// 2. Actual fetch to the script (authoritative)
+// 3. Cache result for 10s to avoid repeated checks
+
+let _onlineCache = null; // {val, ts}
+const ONLINE_TTL = 10000; // 10 seconds
+
+async function isOnline(force=false){
+  // Fast path: browser says definitely offline
+  if(!navigator.onLine) return false;
+  // Cache path: recent check
+  if(!force && _onlineCache && Date.now()-_onlineCache.ts < ONLINE_TTL) return _onlineCache.val;
+  // Real check
   try {
-    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(session),signal:ctrl.signal});
+    const ctrl = new AbortController();
+    const tid  = setTimeout(()=>ctrl.abort(), 4000);
+    await fetch(SCRIPT_URL+'?action=ping', {method:'HEAD', signal:ctrl.signal, cache:'no-store'});
     clearTimeout(tid);
-    const data=await res.json();
-    if(data.error) throw new Error(data.error);
-    return {ok:true,row:data.row};
-  } catch(e) { clearTimeout(tid); return {ok:false,err:e.message}; }
+    _onlineCache = {val:true, ts:Date.now()};
+    return true;
+  } catch {
+    _onlineCache = {val:false, ts:Date.now()};
+    return false;
+  }
 }
 
-async function checkOnline() {
+// Single session send — always returns {ok, row?, err?}
+async function sendSession(session){
+  if(!navigator.onLine) return {ok:false, err:'offline'};
+  const ctrl = new AbortController();
+  const tid  = setTimeout(()=>ctrl.abort(), 7000);
   try {
-    const ctrl=new AbortController();
-    setTimeout(()=>ctrl.abort(),3000);
-    await fetch(SCRIPT_URL+'?action=ping',{signal:ctrl.signal});
-    return true;
-  } catch { return false; }
+    const res  = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(session), signal:ctrl.signal});
+    clearTimeout(tid);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    _onlineCache = {val:true, ts:Date.now()};
+    return {ok:true, row:data.row};
+  } catch(e) {
+    clearTimeout(tid);
+    _onlineCache = {val:false, ts:Date.now()};
+    return {ok:false, err:e.message};
+  }
 }
 
 // ═══════════════════════════════════════════════
 //  SYNC QUEUE
 // ═══════════════════════════════════════════════
-async function syncQueue() {
+let syncing = false;
+async function syncQueue(){
+  if(syncing){ showToast('Already syncing…','info'); return; }
   const q=qGet();
-  if(!q.length){showToast('Nothing to sync','info');return;}
+  if(!q.length){ showToast('Nothing to sync','info'); return; }
+  syncing=true;
   document.getElementById('btnSync').disabled=true;
   showToast('Syncing '+q.length+'…','info');
-  let saved=0,failed=[];
+  let saved=0, failed=[];
   for(const s of q){
     const r=await sendSession(s);
     if(r.ok) saved++;
     else failed.push(s);
   }
   qSave(failed); qUI();
+  syncing=false;
   document.getElementById('btnSync').disabled=false;
   if(!failed.length) showToast('✓ All '+saved+' synced!','ok');
-  else showToast('Synced '+saved+', '+failed.length+' failed','er');
+  else if(saved>0) showToast('Synced '+saved+', '+failed.length+' still offline','er');
+  else showToast('Still offline — '+failed.length+' pending','er');
 }
+
+// Auto-retry sync when connection returns
+window.addEventListener('online', ()=>{
+  _onlineCache=null;
+  if(qGet().length>0){
+    setTimeout(()=>syncQueue(), 1500);
+  }
+});
 
 // ═══════════════════════════════════════════════
 //  BOOT
@@ -424,21 +473,29 @@ window.addEventListener('load',()=>{
   qUI(); buildLotGrid();
   slots=loadSlots();
   if(SCRIPT_URL){ showApp(); buildGrid(); loadHeaders(); }
-
-  // Image picker
   document.getElementById('imgFilePicker').addEventListener('change',function(){
     if(!this.files||!this.files[0]||imgPickIdx<0) return;
-    const file=this.files[0];
     const reader=new FileReader();
     reader.onload=e=>{
-      slots[imgPickIdx].img=e.target.result;
-      saveSlots(slots);
-      buildGrid();
-      // Update the ep panel image preview
-      const imgEl=document.querySelector(`#epSlot${imgPickIdx} .ep-slot-img img`);
-      if(imgEl){imgEl.src=e.target.result;imgEl.classList.add('show');document.querySelector(`#epSlot${imgPickIdx} .ep-slot-img span`).style.display='none';}
+      // Compress to square canvas
+      const img=new Image();
+      img.onload=()=>{
+        const cv=document.createElement('canvas');
+        const sz=128; cv.width=sz; cv.height=sz;
+        const ctx=cv.getContext('2d');
+        const side=Math.min(img.width,img.height);
+        const ox=(img.width-side)/2, oy=(img.height-side)/2;
+        ctx.drawImage(img,ox,oy,side,side,0,0,sz,sz);
+        const b64=cv.toDataURL('image/jpeg',0.8);
+        slots[imgPickIdx].img=b64;
+        saveSlots(slots);
+        buildGrid();
+        // Update panel preview
+        refreshEpSlot(imgPickIdx);
+      };
+      img.src=e.target.result;
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(this.files[0]);
     this.value='';
   });
 });
@@ -446,39 +503,27 @@ window.addEventListener('load',()=>{
 // ═══════════════════════════════════════════════
 //  SETUP
 // ═══════════════════════════════════════════════
-async function connectScript() {
+async function connectScript(){
   const url=document.getElementById('scriptUrl').value.trim();
   const err=document.getElementById('setupErr');
   const btn=document.getElementById('setupBtn');
   err.classList.remove('show');
   if(!url.includes('script.google.com')){err.textContent="Doesn't look like an Apps Script URL.";err.classList.add('show');return;}
   btn.textContent='Connecting…';
-  try {
+  try{
     const res=await fetch(url+'?action=headers');
     const data=await res.json();
     if(data.error) throw new Error(data.error);
     localStorage.setItem(KEY_URL,url); SCRIPT_URL=url;
-    // Populate slots from sheet headers
-    populateSlotsFromHeaders(data.actions);
+    populateSlots(data.actions);
     showApp(); buildGrid();
-  } catch(e){err.textContent='Failed: '+e.message;err.classList.add('show');btn.textContent='Connect & Load';}
+  }catch(e){err.textContent='Failed: '+e.message;err.classList.add('show');btn.textContent='Connect & Load';}
 }
 
-function populateSlotsFromHeaders(actions) {
-  // Fill slots from sheet actions, keep existing custom names/images
-  const current=loadSlots();
-  actions.forEach((a,i)=>{
-    if(i<SLOT_COUNT){
-      // Only set name if slot is empty or matches old sheet name
-      if(!current[i].name||current[i].name===a.name) current[i].name=a.name;
-    }
-  });
-  // Fill remaining slots with generic names
-  for(let i=actions.length;i<SLOT_COUNT;i++){
-    if(!current[i].name) current[i].name='';
-  }
-  slots=current;
-  saveSlots(slots);
+function populateSlots(actions){
+  const cur=loadSlots();
+  actions.forEach((a,i)=>{ if(i<SLOT_COUNT && !cur[i].name) cur[i].name=a.name; });
+  slots=cur; saveSlots(slots);
 }
 
 function showApp(){document.getElementById('setup').style.display='none';document.getElementById('app').classList.add('show');}
@@ -487,221 +532,199 @@ async function loadHeaders(){
   try{
     const res=await fetch(SCRIPT_URL+'?action=headers');
     const data=await res.json();
-    if(data.error) return;
-    populateSlotsFromHeaders(data.actions);
-    buildGrid();
+    if(!data.error){ populateSlots(data.actions); buildGrid(); }
   }catch{}
 }
 
 // ═══════════════════════════════════════════════
-//  GRID — always 12 fixed slots
+//  GRID — visible slots only, stretch evenly
 // ═══════════════════════════════════════════════
 function buildGrid(){
-  const g=document.getElementById('grid'); g.innerHTML='';
-  for(let i=0;i<SLOT_COUNT;i++){
-    const slot=slots[i];
+  const g=document.getElementById('grid');
+  g.innerHTML='';
+  // Only visible slots
+  const visible = slots.map((s,i)=>({...s,idx:i})).filter(s=>s.visible);
+  const count=visible.length;
+  // Calculate rows: ceil(count/2)
+  const rows=Math.max(1,Math.ceil(count/2));
+  g.style.gridTemplateRows=`repeat(${rows},1fr)`;
+
+  visible.forEach(slot=>{
+    const i=slot.idx;
     const b=document.createElement('button');
-    b.className='act'+(slot.name?'':' empty')+(editMode?' edit-mode':'');
+    const isEmpty=!slot.name;
+    b.className='act'+(isEmpty?' empty':'')+(editMode?' edit-mode':'');
     b.id='ab'+i;
-    // Disable if timer not running AND not in edit mode
-    b.disabled = (!S.running && !editMode) || (!slot.name && !editMode);
+    b.disabled=(!S.running&&!editMode)||isEmpty;
 
     let imgHTML='';
-    if(slot.img){
-      imgHTML=`<img class="act-img show" src="${slot.img}" alt="">`;
-    }
+    if(slot.img) imgHTML=`<img class="act-img show" src="${slot.img}" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">`;
+
     b.innerHTML=`
       <span class="edit-badge">EDIT</span>
       ${imgHTML}
       <span class="act-name">${slot.name||'—'}</span>
       <span class="act-split" id="as${i}"></span>
     `;
-
-    if(editMode){
-      b.addEventListener('click',()=>openEditSlot(i));
-    } else {
-      b.addEventListener('click',()=>tapAction(i));
-    }
+    b.addEventListener('click',()=>editMode?openEditSlot(i):tapAction(i));
     g.appendChild(b);
-  }
+  });
 }
 
 // ═══════════════════════════════════════════════
-//  START / STOP — single button swaps
+//  START / STOP
 // ═══════════════════════════════════════════════
-function mainBtnClick(){
-  if(S.running) stopTimer();
-  else startTimer();
-}
+function mainBtnClick(){ S.running?stopTimer():startTimer(); }
 
 function startTimer(){
-  if(S.running) return;
-  if(editMode) return;
+  if(S.running||editMode) return;
   clearTimeout(S.unlockTimer);
   hideFinish();
-  const prev=S; S=freshState();
-  S.running=true;
+  S=fresh(); S.running=true;
   S.t0=S.lastTap=performance.now();
   S.sessionISO=new Date().toISOString();
-
-  S.ival=setInterval(()=>{document.getElementById('timer').textContent=fmt(performance.now()-S.t0);},41);
+  S.ival=setInterval(()=>document.getElementById('timer').textContent=fmt(performance.now()-S.t0),41);
   document.getElementById('timer').className='run';
   setStatus('run');
-
-  // Swap button to STOP
   const mb=document.getElementById('btnMain');
-  mb.textContent='■ Stop';
-  mb.classList.add('stop-mode');
-  mb.disabled=false;
+  mb.textContent='■ Stop'; mb.classList.add('stop-mode'); mb.disabled=false;
   document.getElementById('btnEdit').disabled=true;
-
-  // Enable active (named) slot buttons
-  for(let i=0;i<SLOT_COUNT;i++){
+  // Enable all named visible buttons
+  slots.forEach((sl,i)=>{
     const b=document.getElementById('ab'+i);
-    if(b){
-      b.disabled=!slots[i].name;
-      b.className='act'+(slots[i].name?'':' empty');
-      const sp=document.getElementById('as'+i);
-      if(sp) sp.textContent='';
-      const num=b.querySelector('.act-num'); if(num) num.remove();
-    }
-  }
+    if(b){ b.disabled=!sl.name; b.className='act'+(sl.name?'':' empty'); document.getElementById('as'+i)&&(document.getElementById('as'+i).textContent=''); const n=b.querySelector('.act-num');if(n)n.remove(); }
+  });
 }
 
 function stopTimer(){
   if(!S.running) return;
-  S.running=false;
-  clearInterval(S.ival); S.ival=null;
-  document.getElementById('timer').className='stp';
-  setStatus('stp');
-
-  // Swap back to START
+  S.running=false; clearInterval(S.ival); S.ival=null;
+  document.getElementById('timer').className='stp'; setStatus('stp');
   const mb=document.getElementById('btnMain');
-  mb.textContent='▶ Start';
-  mb.classList.remove('stop-mode');
+  mb.textContent='▶ Start'; mb.classList.remove('stop-mode'); mb.disabled=false;
   document.getElementById('btnEdit').disabled=false;
-
-  // Disable all split buttons
-  for(let i=0;i<SLOT_COUNT;i++){
-    const b=document.getElementById('ab'+i);
-    if(b) b.disabled=true;
-  }
-
+  slots.forEach((_,i)=>{ const b=document.getElementById('ab'+i); if(b) b.disabled=true; });
   if(S.splits.length>0){
     const fb=document.getElementById('btnFinish');
-    fb.textContent='✈ Finish Route';
-    fb.classList.add('show');
-    fb.classList.remove('ready');
+    fb.textContent='✈ Finish Route'; fb.classList.add('show'); fb.classList.remove('ready');
     fb.style.pointerEvents='none'; fb.style.opacity='0.45';
-    S.unlockTimer=setTimeout(()=>{
-      fb.classList.add('ready');
-      fb.style.pointerEvents=''; fb.style.opacity='';
-    },400);
+    S.unlockTimer=setTimeout(()=>{ fb.classList.add('ready'); fb.style.pointerEvents=''; fb.style.opacity=''; },400);
   }
 }
 
 function hideFinish(){
   const fb=document.getElementById('btnFinish');
-  fb.classList.remove('show','ready');
-  fb.style.pointerEvents='none'; fb.style.opacity='0.45';
+  fb.classList.remove('show','ready'); fb.style.pointerEvents='none'; fb.style.opacity='0.45';
 }
 
-// ═══════════════════════════════════════════════
-//  TAP ACTION — single tap, locks immediately
-// ═══════════════════════════════════════════════
+// ─── Single tap, locks immediately ───
 function tapAction(i){
-  if(!S.running) return;
-  if(!slots[i].name) return; // empty slot
+  if(!S.running||!slots[i].name) return;
   const now=performance.now();
   const delta=now-S.lastTap; S.lastTap=now; S.tapN++;
   const name=slots[i].name;
   S.splits=S.splits.filter(s=>s.actionName!==name);
   S.splits.push({actionName:name,deltaMs:delta});
-
   const btn=document.getElementById('ab'+i);
   btn.className='act done';
-  const sp=document.getElementById('as'+i);
-  if(sp) sp.textContent=fmt(delta);
+  const sp=document.getElementById('as'+i); if(sp) sp.textContent=fmt(delta);
   let badge=btn.querySelector('.act-num');
   if(!badge){badge=document.createElement('span');badge.className='act-num';btn.appendChild(badge);}
   badge.textContent='#'+S.tapN;
 }
 
 // ═══════════════════════════════════════════════
-//  EDIT MODE
+//  EDIT MODE — opens immediately, no blocking check
 // ═══════════════════════════════════════════════
 async function toggleEdit(){
   if(editMode){ closeEdit(); return; }
-  // Check online first
-  const online=await checkOnline();
-  if(!online){ showToast('No internet — edit requires connection','er'); return; }
+  // Open panel immediately — don't block UI
   editMode=true;
   document.getElementById('btnEdit').classList.add('active');
-  buildGrid(); // rebuilds with edit-mode class
+  buildGrid();
   buildEditPanel();
   document.getElementById('editPanel').classList.add('show');
+  // Check online in background and warn if offline
+  const online = await isOnline(true);
+  if(!online){
+    showToast('You\'re offline — changes save locally only','info');
+    document.getElementById('epSaveBtn').textContent='Save Locally';
+  } else {
+    document.getElementById('epSaveBtn').textContent='Save Changes to Sheet';
+  }
 }
 
 function closeEdit(){
   editMode=false;
   document.getElementById('btnEdit').classList.remove('active');
   document.getElementById('editPanel').classList.remove('show');
-  buildGrid(); // rebuild normal mode
+  buildGrid();
 }
 
 function buildEditPanel(){
-  const body=document.getElementById('epBody');
-  body.innerHTML='';
+  const body=document.getElementById('epBody'); body.innerHTML='';
   for(let i=0;i<SLOT_COUNT;i++){
     const slot=slots[i];
     const div=document.createElement('div');
     div.className='ep-slot'; div.id='epSlot'+i;
 
-    // Image thumbnail/picker
+    // Image picker
     const imgWrap=document.createElement('div');
-    imgWrap.className='ep-slot-img';
-    imgWrap.title='Tap to change image';
+    imgWrap.className='ep-slot-img'; imgWrap.title='Tap to change image';
     imgWrap.addEventListener('click',()=>pickImage(i));
-
     const imgEl=document.createElement('img');
-    if(slot.img){ imgEl.src=slot.img; imgEl.classList.add('show'); }
-    const imgIcon=document.createElement('span');
-    imgIcon.textContent='📷';
+    if(slot.img){imgEl.src=slot.img;imgEl.classList.add('show');}
+    const imgIcon=document.createElement('span'); imgIcon.textContent='📷';
     if(slot.img) imgIcon.style.display='none';
-    imgWrap.appendChild(imgEl);
-    imgWrap.appendChild(imgIcon);
+    imgWrap.appendChild(imgEl); imgWrap.appendChild(imgIcon);
 
-    const right=document.createElement('div');
-    right.className='ep-slot-right';
-
-    const lbl=document.createElement('div');
-    lbl.className='ep-slot-num';
-    lbl.textContent='Slot '+(i+1);
+    // Right side: label + name input + visible toggle
+    const right=document.createElement('div'); right.className='ep-slot-right';
+    const lbl=document.createElement('div'); lbl.className='ep-slot-num'; lbl.textContent='Slot '+(i+1);
 
     const inp=document.createElement('input');
-    inp.className='ep-slot-inp';
-    inp.type='text';
-    inp.placeholder='Action name…';
-    inp.value=slot.name||'';
+    inp.className='ep-slot-inp'; inp.type='text'; inp.placeholder='Action name…'; inp.value=slot.name||'';
     inp.dataset.idx=i;
     inp.addEventListener('input',()=>{ slots[i].name=inp.value.trim(); });
 
-    right.appendChild(lbl); right.appendChild(inp);
+    // Visible toggle row
+    const toggleRow=document.createElement('div');
+    toggleRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-top:4px;';
+    const toggleLbl=document.createElement('span');
+    toggleLbl.style.cssText='font-size:11px;color:var(--muted);font-weight:600;';
+    toggleLbl.textContent='Show button';
+    const toggleBtn=document.createElement('button');
+    toggleBtn.className='vis-toggle'+(slot.visible?' on':'');
+    toggleBtn.dataset.idx=i;
+    toggleBtn.innerHTML=slot.visible?'<span>ON</span>':'<span>OFF</span>';
+    toggleBtn.addEventListener('click',()=>{
+      slots[i].visible=!slots[i].visible;
+      toggleBtn.className='vis-toggle'+(slots[i].visible?' on':'');
+      toggleBtn.innerHTML=slots[i].visible?'<span>ON</span>':'<span>OFF</span>';
+    });
+    toggleRow.appendChild(toggleLbl); toggleRow.appendChild(toggleBtn);
+
+    right.appendChild(lbl); right.appendChild(inp); right.appendChild(toggleRow);
     div.appendChild(imgWrap); div.appendChild(right);
     body.appendChild(div);
   }
 }
 
-function pickImage(idx){
-  imgPickIdx=idx;
-  document.getElementById('imgFilePicker').click();
+function refreshEpSlot(i){
+  const slot=slots[i];
+  const wrap=document.querySelector('#epSlot'+i+' .ep-slot-img');
+  if(!wrap) return;
+  const imgEl=wrap.querySelector('img');
+  const icon=wrap.querySelector('span');
+  if(slot.img){if(imgEl){imgEl.src=slot.img;imgEl.classList.add('show');}if(icon)icon.style.display='none';}
 }
 
+function pickImage(idx){ imgPickIdx=idx; document.getElementById('imgFilePicker').click(); }
+
 function openEditSlot(i){
-  // Scroll to that slot in the edit panel
   const el=document.getElementById('epSlot'+i);
   if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
-  const inp=el?.querySelector('.ep-slot-inp');
+  const inp=el&&el.querySelector('.ep-slot-inp');
   if(inp) inp.focus();
 }
 
@@ -709,22 +732,17 @@ async function saveEdits(){
   const btn=document.getElementById('epSaveBtn');
   btn.disabled=true; btn.textContent='Saving…';
   saveSlots(slots);
-
-  // Send updated names to sheet via Apps Script
-  try{
-    const online=await checkOnline();
-    if(!online) throw new Error('offline');
-    const res=await fetch(SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'updateHeaders',slots:slots.map(s=>s.name||'')})
-    });
-    const data=await res.json();
-    if(data.error) throw new Error(data.error);
-    showToast('✓ Names saved to sheet','ok');
-  }catch(e){
-    showToast('Names saved locally'+(e.message==='offline'?' (offline)':''),'info');
+  const online=await isOnline(true);
+  if(online){
+    try{
+      const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'updateHeaders',slots:slots.map(s=>s.name||'')})});
+      const data=await res.json();
+      if(data.error) throw new Error(data.error);
+      showToast('✓ Names saved to sheet','ok');
+    }catch{ showToast('Saved locally (sheet update failed)','info'); }
+  } else {
+    showToast('Saved locally (offline)','info');
   }
-
   buildGrid();
   btn.disabled=false; btn.textContent='Save Changes to Sheet';
   closeEdit();
@@ -741,22 +759,21 @@ function openRouteModal(){
   document.getElementById('routeModal').classList.add('show');
 }
 function closeRouteModal(){ document.getElementById('routeModal').classList.remove('show'); }
-
 function selectTaxi(el){
   const v=el.dataset.v;
-  if(S.taxi===v){ S.taxi=null; document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('sel','dim')); }
-  else { S.taxi=v; document.querySelectorAll('.taxi-btn').forEach(b=>{ b.classList.toggle('sel',b.dataset.v===v); b.classList.toggle('dim',b.dataset.v!==v); }); }
+  if(S.taxi===v){S.taxi=null;document.querySelectorAll('.taxi-btn').forEach(b=>b.classList.remove('sel','dim'));}
+  else{S.taxi=v;document.querySelectorAll('.taxi-btn').forEach(b=>{b.classList.toggle('sel',b.dataset.v===v);b.classList.toggle('dim',b.dataset.v!==v);});}
   updateSummary(); updateModalBtn();
 }
 function selectLot(el){
   const v=el.dataset.v;
-  if(S.lot===v){ S.lot=null; document.querySelectorAll('.lot-btn').forEach(b=>b.classList.remove('sel','dim')); }
-  else { S.lot=v; document.querySelectorAll('.lot-btn').forEach(b=>{ b.classList.toggle('sel',b.dataset.v===v); b.classList.toggle('dim',b.dataset.v!==v); }); }
+  if(S.lot===v){S.lot=null;document.querySelectorAll('.lot-btn').forEach(b=>b.classList.remove('sel','dim'));}
+  else{S.lot=v;document.querySelectorAll('.lot-btn').forEach(b=>{b.classList.toggle('sel',b.dataset.v===v);b.classList.toggle('dim',b.dataset.v!==v);});}
   updateSummary(); updateModalBtn();
 }
 function updateSummary(){
   const el=document.getElementById('routeSummary');
-  if(!S.taxi&&!S.lot){ el.innerHTML='<span style="color:var(--muted)">Select Taxi Point → Parking Lot</span>'; return; }
+  if(!S.taxi&&!S.lot){el.innerHTML='<span style="color:var(--muted)">Select Taxi Point → Parking Lot</span>';return;}
   const t=S.taxi?`<span class="rs-taxi">${S.taxi}</span>`:'<span style="color:var(--muted)">?</span>';
   const l=S.lot?`<span class="rs-lot">${S.lot}</span>`:'<span style="color:var(--muted)">?</span>';
   el.innerHTML=`Taxi&nbsp;${t}&nbsp;<span style="color:var(--muted)">→</span>&nbsp;Lot&nbsp;${l}`;
@@ -778,7 +795,7 @@ function buildLotGrid(){
 }
 
 // ═══════════════════════════════════════════════
-//  SAVE
+//  SAVE — stateless, no shared flag
 // ═══════════════════════════════════════════════
 async function doSave(){
   const btn=document.getElementById('btnModalSave');
@@ -788,7 +805,7 @@ async function doSave(){
   const session={startTimeISO:S.sessionISO,splits:[...S.splits],taxiPoint:S.taxi,parkLot:S.lot};
   const result=await sendSession(session);
   if(result.ok){ showToast('✓ Saved to row '+result.row,'ok'); closeRouteModal(); setTimeout(resetAll,1200); }
-  else { qPush(session); showToast('Offline — queued ('+qGet().length+' pending)','info'); closeRouteModal(); setTimeout(resetAll,1500); }
+  else{ qPush(session); showToast('Offline — queued ('+qGet().length+' pending)','info'); closeRouteModal(); setTimeout(resetAll,1500); }
 }
 
 // ═══════════════════════════════════════════════
@@ -796,7 +813,7 @@ async function doSave(){
 // ═══════════════════════════════════════════════
 function resetAll(){
   clearTimeout(S.unlockTimer); clearInterval(S.ival);
-  S=freshState();
+  S=fresh();
   document.getElementById('timer').textContent='0:00.000';
   document.getElementById('timer').className='';
   const mb=document.getElementById('btnMain');
@@ -804,8 +821,7 @@ function resetAll(){
   document.getElementById('btnEdit').disabled=false;
   const msb=document.getElementById('btnModalSave');
   msb.removeAttribute('data-ready'); msb.removeAttribute('data-saving'); msb.textContent='Save to Sheet';
-  hideFinish(); setStatus(''); qUI();
-  buildGrid();
+  hideFinish(); setStatus(''); qUI(); buildGrid();
 }
 
 // ═══════════════════════════════════════════════
@@ -813,6 +829,16 @@ function resetAll(){
 // ═══════════════════════════════════════════════
 function fmt(ms){ const t=Math.round(ms); return `${Math.floor(t/60000)}:${String(Math.floor((t%60000)/1000)).padStart(2,'0')}.${String(t%1000).padStart(3,'0')}`; }
 function setStatus(type){
+  document.getElementById('spill').className='spill'+(type?' '+type:'');
+  document.getElementById('sdot').className='sdot'+(type==='run'?' live':type==='stp'?' dead':'');
+  document.getElementById('sTxt').textContent=type==='run'?'Running':type==='stp'?'Stopped':'Ready';
+}
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>{t.className='toast '+type;},3200);
+}
+(type){
   document.getElementById('spill').className='spill'+(type?' '+type:'');
   document.getElementById('sdot').className='sdot'+(type==='run'?' live':type==='stp'?' dead':'');
   document.getElementById('sTxt').textContent=type==='run'?'Running':type==='stp'?'Stopped':'Ready';
