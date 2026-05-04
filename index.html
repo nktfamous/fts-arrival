@@ -396,16 +396,18 @@ let _onlineCache = null; // {val, ts}
 const ONLINE_TTL = 10000; // 10 seconds
 
 async function isOnline(force=false){
-  // Fast path: browser says definitely offline
   if(!navigator.onLine) return false;
-  // Cache path: recent check
   if(!force && _onlineCache && Date.now()-_onlineCache.ts < ONLINE_TTL) return _onlineCache.val;
-  // Real check
+  if(!SCRIPT_URL) return navigator.onLine;
   try {
     const ctrl = new AbortController();
     const tid  = setTimeout(()=>ctrl.abort(), 4000);
-    await fetch(SCRIPT_URL+'?action=ping', {method:'HEAD', signal:ctrl.signal, cache:'no-store'});
+    // Use GET with a lightweight action — HEAD often fails on Apps Script
+    const res = await fetch(SCRIPT_URL+'?action=ping', {
+      method:'GET', signal:ctrl.signal, cache:'no-store', redirect:'follow'
+    });
     clearTimeout(tid);
+    // Any response (even 200 with error json) means we reached the server
     _onlineCache = {val:true, ts:Date.now()};
     return true;
   } catch {
@@ -417,18 +419,27 @@ async function isOnline(force=false){
 // Single session send — always returns {ok, row?, err?}
 async function sendSession(session){
   if(!navigator.onLine) return {ok:false, err:'offline'};
+  if(!SCRIPT_URL) return {ok:false, err:'no script url'};
   const ctrl = new AbortController();
   const tid  = setTimeout(()=>ctrl.abort(), 7000);
   try {
-    const res  = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(session), signal:ctrl.signal});
+    const res = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body:JSON.stringify(session),
+      signal:ctrl.signal,
+      redirect:'follow',
+      cache:'no-store'
+    });
     clearTimeout(tid);
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error('Bad response'); }
     if(data.error) throw new Error(data.error);
     _onlineCache = {val:true, ts:Date.now()};
     return {ok:true, row:data.row};
   } catch(e) {
     clearTimeout(tid);
-    _onlineCache = {val:false, ts:Date.now()};
+    if(e.name!=='AbortError') _onlineCache = {val:false, ts:Date.now()};
     return {ok:false, err:e.message};
   }
 }
@@ -504,20 +515,49 @@ window.addEventListener('load',()=>{
 //  SETUP
 // ═══════════════════════════════════════════════
 async function connectScript(){
-  const url=document.getElementById('scriptUrl').value.trim();
+  const raw=document.getElementById('scriptUrl').value.trim();
   const err=document.getElementById('setupErr');
   const btn=document.getElementById('setupBtn');
   err.classList.remove('show');
-  if(!url.includes('script.google.com')){err.textContent="Doesn't look like an Apps Script URL.";err.classList.add('show');return;}
+  if(!raw.includes('script.google.com')){err.textContent="Doesn't look like an Apps Script URL.";err.classList.add('show');return;}
+
+  // Normalise URL — strip trailing slash, ensure /exec at end
+  let url = raw.replace(/\/+$/, '');
+  if(!url.endsWith('/exec')) url = url.replace(/\/(dev|exec)?$/, '') + '/exec';
+
   btn.textContent='Connecting…';
+  btn.disabled=true;
+
   try{
-    const res=await fetch(url+'?action=headers');
-    const data=await res.json();
+    // Apps Script with redirect-following and explicit no-cache
+    const res = await fetch(url+'?action=headers', {
+      method: 'GET',
+      redirect: 'follow',
+      cache: 'no-store',
+      headers: {'Accept': 'application/json'}
+    });
+
+    if(!res.ok) throw new Error('HTTP '+res.status);
+
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error('Bad response from script — check deployment settings'); }
+
     if(data.error) throw new Error(data.error);
-    localStorage.setItem(KEY_URL,url); SCRIPT_URL=url;
+    if(!data.actions) throw new Error('Script returned no actions — check Code.gs is deployed');
+
+    localStorage.setItem(KEY_URL, url);
+    SCRIPT_URL = url;
     populateSlots(data.actions);
-    showApp(); buildGrid();
-  }catch(e){err.textContent='Failed: '+e.message;err.classList.add('show');btn.textContent='Connect & Load';}
+    showApp();
+    buildGrid();
+  } catch(e) {
+    err.textContent = e.message || 'Connection failed';
+    err.classList.add('show');
+    btn.textContent='Connect & Load';
+    btn.disabled=false;
+  }
 }
 
 function populateSlots(actions){
@@ -529,10 +569,14 @@ function populateSlots(actions){
 function showApp(){document.getElementById('setup').style.display='none';document.getElementById('app').classList.add('show');}
 
 async function loadHeaders(){
+  if(!SCRIPT_URL) return;
   try{
-    const res=await fetch(SCRIPT_URL+'?action=headers');
-    const data=await res.json();
-    if(!data.error){ populateSlots(data.actions); buildGrid(); }
+    const res=await fetch(SCRIPT_URL+'?action=headers',{
+      redirect:'follow', cache:'no-store'
+    });
+    const text=await res.text();
+    const data=JSON.parse(text);
+    if(!data.error && data.actions){ populateSlots(data.actions); buildGrid(); }
   }catch{}
 }
 
