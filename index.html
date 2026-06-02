@@ -510,27 +510,56 @@ function qui(){
 // ── Network ──
 async function post(body){
   if(!URL_) return {ok:false,err:'no url'};
-  const c=new AbortController();
-  const t=setTimeout(()=>c.abort(),8000);
+  // Encode the body as a GET param and use JSONP — avoids all CORS issues
   try{
-    const r=await fetch(URL_,{method:'POST',body:JSON.stringify(body),signal:c.signal,redirect:'follow',cache:'no-store'});
-    clearTimeout(t);
-    const txt=await r.text();
-    const d=JSON.parse(txt);
-    if(d.error) throw new Error(d.error);
-    return {ok:true,data:d};
-  }catch(e){clearTimeout(t);return {ok:false,err:e.message};}
+    const data = await callScript(URL_, {
+      action: 'saveData',
+      payload: JSON.stringify(body)
+    });
+    if(data.error) throw new Error(data.error);
+    return {ok:true, data};
+  }catch(e){
+    return {ok:false, err:e.message};
+  }
+}
+
+// JSONP call — bypasses CORS completely, works from any domain
+function callScript(url, params){
+  return new Promise((resolve, reject)=>{
+    const cbName = '_jscb_'+Date.now();
+    const timeout = setTimeout(()=>{
+      delete window[cbName];
+      const s=document.getElementById(cbName);
+      if(s) s.remove();
+      reject(new Error('Timeout — check script URL and deployment'));
+    }, 12000);
+
+    window[cbName] = function(data){
+      clearTimeout(timeout);
+      delete window[cbName];
+      const s=document.getElementById(cbName);
+      if(s) s.remove();
+      resolve(data);
+    };
+
+    const qs = Object.entries({...params, callback: cbName})
+      .map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+
+    const s=document.createElement('script');
+    s.id=cbName;
+    s.src=url+'?'+qs;
+    s.onerror=()=>{
+      clearTimeout(timeout);
+      delete window[cbName];
+      s.remove();
+      reject(new Error('Script load failed — check URL'));
+    };
+    document.head.appendChild(s);
+  });
 }
 
 async function getH(url){
-  const c=new AbortController();
-  const t=setTimeout(()=>c.abort(),8000);
-  try{
-    const r=await fetch(url+'?action=headers',{signal:c.signal,redirect:'follow',cache:'no-store'});
-    clearTimeout(t);
-    const txt=await r.text();
-    return JSON.parse(txt);
-  }catch(e){clearTimeout(t);throw e;}
+  return await callScript(url, {action:'headers'});
 }
 
 // ── Sync ──
