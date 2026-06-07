@@ -134,22 +134,22 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
 @keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
 /* Settings header */
-.ss-hdr{padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.ss-hdr-title{font-size:20px;font-weight:800;letter-spacing:-0.3px;}
+.ss-hdr{padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ss-hdr-title{font-size:22px;font-weight:800;letter-spacing:-0.4px;}
 
 /* Segmented control — matches prototype exactly */
-.seg{margin:12px 16px 4px;display:flex;background:var(--s2);border-radius:14px;padding:4px;gap:3px;flex-shrink:0;}
-.seg-btn{flex:1;padding:10px 8px;border:none;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;transition:all 0.18s;background:transparent;color:var(--muted);}
-.seg-btn.active{background:var(--s3);color:var(--white);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.45);}
+.seg{margin:14px 16px 6px;display:flex;background:var(--s2);border-radius:50px;padding:4px;gap:0;flex-shrink:0;}
+.seg-btn{flex:1;padding:11px 8px;border:none;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;transition:all 0.18s;background:transparent;color:var(--muted);}
+.seg-btn.active{background:var(--s3);color:var(--white);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
 
 /* Scrollable list */
-.ss-list{flex:1;min-height:0;overflow-y:auto;padding:10px 16px 4px;display:flex;flex-direction:column;gap:8px;}
+.ss-list{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:10px;}
 .ss-list::-webkit-scrollbar{width:0;}
 
 /* Slot row */
-.slot-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s2);border-radius:16px;}
-.slot-thumb{width:52px;height:52px;border-radius:12px;flex-shrink:0;background:var(--s3);border:1.5px dashed rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;touch-action:manipulation;}
-.slot-thumb img{width:100%;height:100%;object-fit:cover;display:none;}
+.slot-row{display:flex;align-items:center;gap:14px;padding:14px;background:var(--s2);border-radius:16px;}
+.slot-thumb{width:56px;height:56px;border-radius:12px;flex-shrink:0;background:var(--s3);border:1.5px dashed rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;touch-action:manipulation;}
+.slot-thumb img{width:100%;height:100%;object-fit:cover;object-position:center;display:none;border-radius:11px;}
 .slot-thumb img.show{display:block;}
 .slot-r{flex:1;display:flex;flex-direction:column;gap:6px;}
 .slot-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);}
@@ -167,9 +167,9 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
 .tog input:checked+.tog-sl::after{transform:translateX(20px);}
 
 /* Company row in settings */
-.co-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s2);border-radius:16px;}
-.co-logo{width:80px;height:52px;border-radius:10px;flex-shrink:0;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;cursor:pointer;touch-action:manipulation;}
-.co-logo img{width:100%;height:100%;object-fit:contain;}
+.co-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s2);border-radius:16px;}
+.co-logo{width:90px;height:60px;border-radius:10px;flex-shrink:0;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;cursor:pointer;touch-action:manipulation;}
+.co-logo img{width:100%;height:100%;object-fit:cover;display:block;}
 .co-r{flex:1;display:flex;flex-direction:column;gap:4px;}
 .co-del{width:34px;height:34px;border-radius:50%;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;flex-shrink:0;}
 .co-del:active{opacity:0.7;}
@@ -214,7 +214,7 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
 .co-card:active{transform:scale(0.94);}
 .co-card.sel{border-color:var(--a2);}
 .co-card-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;background:var(--s2);overflow:hidden;}
-.co-card-img img{width:100%;height:100%;object-fit:contain;padding:8px;}
+.co-card-img img{width:100%;height:100%;object-fit:cover;object-position:center;}
 .co-card-name{padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:var(--off);border-top:1px solid var(--border);background:var(--s1);}
 
 /* Lot groups */
@@ -342,7 +342,7 @@ var AC=[
   {code:'B',bg:'#1e3a8a',col:'#60a5fa',label:'Code B',planes:'LJ45, ATR42, Yak40',max:'B'},
   {code:'C',bg:'#14532d',col:'#4ade80',label:'Code C',planes:'A320, B737, A220',  max:'C'},
   {code:'C+',bg:'#1a2e05',col:'#a3e635',label:'Code C+',planes:'B737MAX, A321',   max:'C'},
-  {code:'D',bg:'#431407',col:'#fb923c',label:'Code D',planes:'B767, B757, C130',  max:'D'},
+  {code:'D',bg:'#7c2d12',col:'#f97316',label:'Code D',planes:'B767, B757, C130',  max:'D'},
   {code:'E',bg:'#2e1065',col:'#c084fc',label:'Code E',planes:'B777, A330, A340',  max:'E'},
   {code:'F',bg:'#450a0a',col:'#f87171',label:'Code F',planes:'B747, A380, An-124',max:'F'},
 ];
