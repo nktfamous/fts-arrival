@@ -769,6 +769,28 @@ function buildAPITab(list){
     +'<div>5. Paste it above ↑</div>'
     +'</div>';
   list.appendChild(howto);
+
+  // Test button — shows exactly what the API returns
+  var testWrap=document.createElement('div');testWrap.style.cssText='margin-top:12px;';
+  var testBtn=document.createElement('button');
+  testBtn.style.cssText='width:100%;padding:14px;border-radius:var(--rp);border:1.5px solid var(--ln2);background:transparent;color:var(--blue2);font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;';
+  testBtn.textContent='Test API Connection';
+  var testOut=document.createElement('div');
+  testOut.style.cssText='margin-top:10px;padding:12px;background:var(--ink2);border-radius:var(--r);font-size:12px;color:var(--fg3);word-break:break-all;display:none;font-family:monospace;line-height:1.6;';
+  testBtn.addEventListener('click',function(){
+    var k=localStorage.getItem('fts_avkey')||'';
+    if(!k){testOut.style.display='block';testOut.textContent='No API key saved yet.';return;}
+    testOut.style.display='block';testOut.textContent='Testing…';
+    jsonp(URL_,{action:'getFlights',airport:'BOJ',apikey:k},15000)
+      .then(function(d){
+        if(d.error){testOut.textContent='ERROR: '+d.error;}
+        else if(d.flights&&d.flights.length>0){testOut.textContent='✓ SUCCESS! Got '+d.flights.length+' flights.\n\nFirst flight: '+JSON.stringify(d.flights[0]).substring(0,200);}
+        else{testOut.textContent='✓ Connected but 0 flights returned.\nThis means no flights scheduled right now, or the Apps Script needs redeploying.\n\nFull response: '+JSON.stringify(d).substring(0,300);}
+      })
+      .catch(function(e){testOut.textContent='TIMEOUT/ERROR: '+e.message+'\n\nMake sure you redeployed Code.gs as a new version!';});
+  });
+  testWrap.appendChild(testBtn);testWrap.appendChild(testOut);
+  list.appendChild(testWrap);
 }
 
 function saveSets(){
@@ -934,13 +956,25 @@ function loadFlights(){
     apikey:AV_API_KEY
   },20000)
     .then(function(data){
+      // Show raw response for debugging
+      console.log('Flight API response:', JSON.stringify(data));
+
       if(data.error){
-        listEl.innerHTML='<div class="fl-empty">'+data.error+'<br><small style="color:var(--fg4)">Check your API key in Settings</small></div>';
+        // Show full error with retry button
+        listEl.innerHTML='<div class="fl-empty" style="text-align:left;padding:16px">'
+          +'<div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:8px">Error loading flights</div>'
+          +'<div style="font-size:12px;color:var(--fg3);word-break:break-all;margin-bottom:12px">'+data.error+'</div>'
+          +'<button onclick="loadFlights()" style="padding:10px 18px;border-radius:50px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Retry</button>'
+          +'</div>';
         lblEl.textContent='';
         return;
       }
       if(!data.flights||data.flights.length===0){
-        listEl.innerHTML='<div class="fl-empty">No arrivals found for today.<br>Check back when flights are scheduled.</div>';
+        listEl.innerHTML='<div class="fl-empty">'
+          +'No arrivals found for today.<br><br>'
+          +'<small style="color:var(--fg4)">BOJ is a seasonal airport — flights run May–October.<br>If it's the season, try refreshing.</small><br><br>'
+          +'<button onclick="loadFlights()" style="padding:10px 18px;border-radius:50px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Refresh</button>'
+          +'</div>';
         lblEl.textContent='';
         return;
       }
@@ -950,7 +984,11 @@ function loadFlights(){
       lblEl.textContent='SELECT ARRIVING AIRCRAFT';
     })
     .catch(function(e){
-      listEl.innerHTML='<div class="fl-empty">Could not load flights.<br><small style="color:var(--fg4)">'+e.message+'</small></div>';
+      listEl.innerHTML='<div class="fl-empty" style="text-align:left;padding:16px">'
+        +'<div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:8px">Connection failed</div>'
+        +'<div style="font-size:12px;color:var(--fg3);margin-bottom:12px">'+e.message+'</div>'
+        +'<button onclick="loadFlights()" style="padding:10px 18px;border-radius:50px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Retry</button>'
+        +'</div>';
       lblEl.textContent='';
     });
 }
