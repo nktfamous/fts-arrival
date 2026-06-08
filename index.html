@@ -856,32 +856,36 @@ function loadFlights(){
   listEl.innerHTML='<div class="fl-loading"><div class="fl-spinner"></div><div class="fl-loading-txt">Fetching arrivals for '+AIRPORT_ICAO+'…</div></div>';
   lblEl.textContent='';
 
-  // OpenSky arrivals API — last 12 hours to end of today
-  var now=Math.floor(Date.now()/1000);
+  // Calculate today's time window
   var todayStart=new Date();todayStart.setHours(0,0,0,0);
   var begin=Math.floor(todayStart.getTime()/1000);
-  var end=begin+86400; // full day
+  var end=begin+86400;
 
-  var url='https://opensky-network.org/api/flights/arrival?airport='+AIRPORT_ICAO+'&begin='+begin+'&end='+end;
-
-  fetch(url)
-    .then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      return r.json();
-    })
+  // Route through Apps Script proxy to avoid CORS
+  // Apps Script fetches OpenSky server-side and returns data via JSONP
+  jsonp(URL_,{
+    action:'getFlights',
+    airport:AIRPORT_ICAO,
+    begin:begin,
+    end:end
+  },20000)
     .then(function(data){
-      if(!Array.isArray(data)||data.length===0){
-        listEl.innerHTML='<div class="fl-empty">No arrivals found for today.<br>Check back closer to flight times.</div>';
+      if(data.error){
+        listEl.innerHTML='<div class="fl-empty">'+data.error+'</div>';
+        return;
+      }
+      if(!Array.isArray(data.flights)||data.flights.length===0){
+        listEl.innerHTML='<div class="fl-empty">No arrivals scheduled for today yet.<br>Check back later.</div>';
         lblEl.textContent='';
         return;
       }
-      _flights=processFlights(data);
+      _flights=processFlights(data.flights);
       _filteredFlights=_flights.slice();
       renderFlights(_filteredFlights);
       lblEl.textContent='SELECT ARRIVING AIRCRAFT';
     })
     .catch(function(e){
-      listEl.innerHTML='<div class="fl-empty">Could not load flights.<br>Check your connection.<br><small style="color:var(--fg4)">'+e.message+'</small></div>';
+      listEl.innerHTML='<div class="fl-empty">Could not load flights.<br><small style="color:var(--fg4)">'+e.message+'</small></div>';
       lblEl.textContent='';
     });
 }
