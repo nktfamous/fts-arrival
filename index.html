@@ -694,6 +694,15 @@ function buildSetList(){
     var hint=document.createElement('div');
     hint.style.cssText='font-size:12px;color:var(--fg4);padding:4px 0 10px;line-height:1.6;';
     hint.textContent='Airline names are fixed. Tap the logo box to add your own image.';
+
+    // API key input
+    var apiWrap=document.createElement('div');apiWrap.className='sl-card';apiWrap.style.flexDirection='column';apiWrap.style.gap='8px';
+    var apiLbl=document.createElement('div');apiLbl.className='sl-lbl';apiLbl.textContent='AVIATIONSTACK API KEY';
+    var apiSub=document.createElement('div');apiSub.style.cssText='font-size:12px;color:var(--fg4);';apiSub.innerHTML='Free at <a href="https://aviationstack.com" style="color:var(--blue2)">aviationstack.com</a> — 100 calls/month free';
+    var apiInp=document.createElement('input');apiInp.className='sl-inp';apiInp.type='text';apiInp.placeholder='Paste your API key…';apiInp.value=localStorage.getItem('fts_avkey')||'';apiInp.setAttribute('inputmode','text');apiInp.setAttribute('-webkit-user-select','text');apiInp.style.userSelect='text';
+    apiInp.addEventListener('input',function(){localStorage.setItem('fts_avkey',apiInp.value.trim());});
+    apiWrap.appendChild(apiLbl);apiWrap.appendChild(apiSub);apiWrap.appendChild(apiInp);
+    list.insertBefore(apiWrap,list.firstChild);
     list.appendChild(hint);
     AIRLINES.forEach(function(al,i){
       var imgs=loadAirlineImgs();
@@ -804,6 +813,8 @@ function cropOK(){
 // ── Route ──
 var rStep=1, _flights=[], _filteredFlights=[], _selFlight=null;
 var AIRPORT_ICAO='LBBG';
+var AIRPORT_IATA='BOJ'; // Burgas uses BOJ for schedule APIs
+var AV_API_KEY=localStorage.getItem('fts_avkey')||'';
 
 function openRoute(){
   if(!S.splits.length)return;
@@ -853,29 +864,32 @@ function rBack(){if(rStep===1)closeRoute();else showStep(rStep-1);}
 function loadFlights(){
   var listEl=document.getElementById('flightList');
   var lblEl=document.getElementById('flightStatusLbl');
-  listEl.innerHTML='<div class="fl-loading"><div class="fl-spinner"></div><div class="fl-loading-txt">Fetching arrivals for '+AIRPORT_ICAO+'…</div></div>';
+
+  // Check API key
+  AV_API_KEY=localStorage.getItem('fts_avkey')||'';
+  if(!AV_API_KEY){
+    listEl.innerHTML='<div class="fl-empty">Add your free Aviationstack API key in Settings → Airlines to enable live flights.</div>';
+    lblEl.textContent='';
+    return;
+  }
+
+  listEl.innerHTML='<div class="fl-loading"><div class="fl-spinner"></div><div class="fl-loading-txt">Fetching arrivals for BOJ…</div></div>';
   lblEl.textContent='';
 
-  // Calculate today's time window
-  var todayStart=new Date();todayStart.setHours(0,0,0,0);
-  var begin=Math.floor(todayStart.getTime()/1000);
-  var end=begin+86400;
-
-  // Route through Apps Script proxy to avoid CORS
-  // Apps Script fetches OpenSky server-side and returns data via JSONP
+  // Route through Apps Script proxy — Aviationstack via UrlFetchApp
   jsonp(URL_,{
     action:'getFlights',
-    airport:AIRPORT_ICAO,
-    begin:begin,
-    end:end
+    airport:AIRPORT_IATA,
+    apikey:AV_API_KEY
   },20000)
     .then(function(data){
       if(data.error){
-        listEl.innerHTML='<div class="fl-empty">'+data.error+'</div>';
+        listEl.innerHTML='<div class="fl-empty">'+data.error+'<br><small style="color:var(--fg4)">Check your API key in Settings</small></div>';
+        lblEl.textContent='';
         return;
       }
-      if(!Array.isArray(data.flights)||data.flights.length===0){
-        listEl.innerHTML='<div class="fl-empty">No arrivals scheduled for today yet.<br>Check back later.</div>';
+      if(!data.flights||data.flights.length===0){
+        listEl.innerHTML='<div class="fl-empty">No arrivals found for today.<br>Check back when flights are scheduled.</div>';
         lblEl.textContent='';
         return;
       }
@@ -891,39 +905,46 @@ function loadFlights(){
 }
 
 function processFlights(raw){
-  var now=Date.now()/1000;
-  var todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
-  var todayStart=todayMidnight.getTime()/1000;
-
+  var now=Date.now();
   var flights=raw.map(function(f){
-    var arrTime=f.lastSeen||f.firstSeen||0;
-    var depTime=f.firstSeen||0;
-    var callsign=(f.callsign||'').trim();
-    var reg=(f.estArrivalAirport===AIRPORT_ICAO)?f.icao24:'';
-    // Match airline from callsign
-    var airline=matchAirline(callsign);
-    // Time status
-    var diffMin=(arrTime-now)/60;
+    // Aviationstack format
+    var arr=f.arrival||{};
+    var dep=f.departure||{};
+    var fl=f.flight||{};
+    var al=f.airline||{};
+    var ac=f.aircraft||{};
+
+    var callsign=(fl.iataNumber||fl.icaoNumber||'').trim();
+    var reg=(ac.registration||'').trim();
+    var origin=(dep.iataCode||'').trim();
+
+    // Parse scheduled arrival time
+    var schedStr=arr.scheduledTime||arr.estimatedTime||'';
+    var arrMs=schedStr?new Date(schedStr).getTime():0;
+
+    // Status
+    var rawStatus=(f.status||'').toLowerCase();
     var status='scheduled';
-    if(arrTime>0&&arrTime<now) status='landed';
-    else if(arrTime>0&&diffMin<10) status='live';
+    if(rawStatus==='landed'||rawStatus==='arrived') status='landed';
+    else if(rawStatus==='active'||rawStatus==='en-route') status='live';
+    else if(arrMs>0&&arrMs<now-1800000) status='landed'; // >30min ago = landed
+
+    // Match airline
+    var airline=matchAirline(callsign)||(al.iataCode?{icao:al.icaoCode||'',iata:al.iataCode||'',name:al.name||al.iataCode}:null);
+
     return {
       callsign:callsign,
-      icao24:f.icao24||'',
-      reg:f.icao24?f.icao24.toUpperCase():'',
-      arrTime:arrTime,
-      depTime:depTime,
-      estDep:f.estDepartureAirport||'',
-      estArr:f.estArrivalAirport||'',
+      reg:reg,
+      arrMs:arrMs,
+      origin:origin,
       status:status,
       airline:airline,
-      diffMin:diffMin,
+      acType:ac.iataCode||'',
     };
-  });
+  }).filter(function(f){return f.callsign;});
 
-  // Sort: upcoming first (by arr time asc), then past most recent first
-  var upcoming=flights.filter(function(f){return f.status!=='landed';}).sort(function(a,b){return a.arrTime-b.arrTime;});
-  var landed=flights.filter(function(f){return f.status==='landed';}).sort(function(a,b){return b.arrTime-a.arrTime;});
+  var upcoming=flights.filter(function(f){return f.status!=='landed';}).sort(function(a,b){return a.arrMs-b.arrMs;});
+  var landed=flights.filter(function(f){return f.status==='landed';}).sort(function(a,b){return b.arrMs-a.arrMs;});
   return upcoming.concat(landed);
 }
 
@@ -961,7 +982,7 @@ function renderFlights(flights){
     // Time display
     var timeStr='—';
     if(f.arrTime>0){
-      var d=new Date(f.arrTime*1000);
+      var d=new Date(f.arrMs);
       timeStr=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
     }
 
@@ -990,7 +1011,7 @@ function renderFlights(flights){
       '<div class="fl-left">'+
         '<div class="fl-time">'+timeStr+'</div>'+
         '<div class="fl-status '+statusClass+'">'+statusTxt+'</div>'+
-        '<div class="fl-route">FROM <span>'+origin+'</span></div>'+
+        '<div class="fl-route">FROM <span>'+f.origin+'</span></div>'+
       '</div>'+
       '<div class="fl-logo">'+
         '<div class="fl-logo-img">'+logoHtml+'</div>'+
