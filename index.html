@@ -323,8 +323,9 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
     <div class="sh-hdr"><div class="sh-title">Settings</div></div>
     <div class="seg">
       <div class="seg-inner">
-        <button class="seg-btn on" id="tabS" onclick="swTab('s')">Split Buttons</button>
+        <button class="seg-btn on" id="tabS" onclick="swTab('s')">Splits</button>
         <button class="seg-btn" id="tabC" onclick="swTab('c')">Airlines</button>
+        <button class="seg-btn" id="tabA" onclick="swTab('a')">API</button>
       </div>
     </div>
     <div class="sh-list" id="setList"></div>
@@ -663,7 +664,9 @@ function swTab(t){
   _tab=t;
   document.getElementById('tabS').className='seg-btn'+(t==='s'?' on':'');
   document.getElementById('tabC').className='seg-btn'+(t==='c'?' on':'');
+  document.getElementById('tabA').className='seg-btn'+(t==='a'?' on':'');
   buildSetList();
+  document.getElementById('setSave').style.display=t==='a'?'none':'';
   document.getElementById('setSave').textContent=t==='s'?'Save':'Save Airlines';
 }
 function buildSetList(){
@@ -689,20 +692,12 @@ function buildSetList(){
       body.appendChild(lbl);body.appendChild(inp);body.appendChild(vr);
       card.appendChild(thumb);card.appendChild(body);list.appendChild(card);
     });
-  } else {
-    // Airlines: name is locked (coded), only logo image is editable
+  } else if(_tab==='c'){
+    // Airlines: name is locked, only logo image is editable
     var hint=document.createElement('div');
     hint.style.cssText='font-size:12px;color:var(--fg4);padding:4px 0 10px;line-height:1.6;';
-    hint.textContent='Airline names are fixed. Tap the logo box to add your own image.';
-
-    // API key input
-    var apiWrap=document.createElement('div');apiWrap.className='sl-card';apiWrap.style.flexDirection='column';apiWrap.style.gap='8px';
-    var apiLbl=document.createElement('div');apiLbl.className='sl-lbl';apiLbl.textContent='AVIATIONSTACK API KEY';
-    var apiSub=document.createElement('div');apiSub.style.cssText='font-size:12px;color:var(--fg4);';apiSub.innerHTML='Free at <a href="https://aviationstack.com" style="color:var(--blue2)">aviationstack.com</a> — 100 calls/month free';
-    var apiInp=document.createElement('input');apiInp.className='sl-inp';apiInp.type='text';apiInp.placeholder='Paste your API key…';apiInp.value=localStorage.getItem('fts_avkey')||'';apiInp.setAttribute('inputmode','text');apiInp.setAttribute('-webkit-user-select','text');apiInp.style.userSelect='text';
-    apiInp.addEventListener('input',function(){localStorage.setItem('fts_avkey',apiInp.value.trim());});
-    apiWrap.appendChild(apiLbl);apiWrap.appendChild(apiSub);apiWrap.appendChild(apiInp);
-    list.insertBefore(apiWrap,list.firstChild);
+    hint.textContent='Airline names are fixed. Tap the logo to add your own image.';
+    list.appendChild(hint);
     list.appendChild(hint);
     AIRLINES.forEach(function(al,i){
       var imgs=loadAirlineImgs();
@@ -718,8 +713,64 @@ function buildSetList(){
       body.appendChild(lbl);body.appendChild(nm);
       card.appendChild(logo);card.appendChild(body);list.appendChild(card);
     });
+  } else {
+    // API tab
+    buildAPITab(list);
   }
 }
+function buildAPITab(list){
+  // Header
+  var hdr=document.createElement('div');
+  hdr.style.cssText='margin-bottom:16px;';
+  var htitle=document.createElement('div');htitle.style.cssText='font-size:15px;font-weight:700;color:var(--fg2);margin-bottom:6px;';htitle.textContent='Live Flight Data';
+  var hsub=document.createElement('div');hsub.style.cssText='font-size:13px;color:var(--fg4);line-height:1.6;';
+  hsub.textContent='Connect to Aviationstack for live arrivals at Burgas Airport. Free plan includes 100 calls/month.';
+  hdr.appendChild(htitle);hdr.appendChild(hsub);list.appendChild(hdr);
+
+  // Status card
+  var key=localStorage.getItem('fts_avkey')||'';
+  var statusCard=document.createElement('div');
+  statusCard.style.cssText='display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:var(--r);margin-bottom:14px;'+(key?'background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.25);':'background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.25);');
+  var statusDot=document.createElement('div');statusDot.style.cssText='width:10px;height:10px;border-radius:50%;flex-shrink:0;background:'+(key?'var(--green)':'var(--red)');
+  var statusTxt=document.createElement('div');
+  statusTxt.style.cssText='font-size:13px;font-weight:600;color:'+(key?'var(--green)':'var(--red)');
+  statusTxt.textContent=key?'Connected — API key saved':'Not connected — add your key below';
+  statusCard.appendChild(statusDot);statusCard.appendChild(statusTxt);list.appendChild(statusCard);
+
+  // API key input card
+  var card=document.createElement('div');card.className='sl-card';card.style.cssText='flex-direction:column;gap:10px;align-items:stretch;';
+  var lbl=document.createElement('div');lbl.className='sl-lbl';lbl.textContent='AVIATIONSTACK API KEY';
+  var inp=document.createElement('input');inp.className='sl-inp';inp.type='text';
+  inp.placeholder='Paste your API key here…';inp.value=key;
+  inp.setAttribute('inputmode','text');inp.style.cssText+=';-webkit-user-select:text;user-select:text;';
+  inp.addEventListener('input',function(){
+    localStorage.setItem('fts_avkey',inp.value.trim());
+    AV_API_KEY=inp.value.trim();
+    // Update status dot live
+    var dot=statusCard.querySelector('div');
+    var txt=statusCard.querySelectorAll('div')[1];
+    var has=inp.value.trim().length>0;
+    statusCard.style.background=has?'rgba(48,209,88,.1)':'rgba(255,69,58,.1)';
+    statusCard.style.borderColor=has?'rgba(48,209,88,.25)':'rgba(255,69,58,.25)';
+    dot.style.background=has?'var(--green)':'var(--red)';
+    txt.style.color=has?'var(--green)':'var(--red)';
+    txt.textContent=has?'Connected — API key saved':'Not connected — add your key below';
+  });
+  card.appendChild(lbl);card.appendChild(inp);list.appendChild(card);
+
+  // How to get key
+  var howto=document.createElement('div');howto.style.cssText='margin-top:16px;padding:14px 16px;background:var(--ink2);border-radius:var(--r);border:1px solid var(--ln);';
+  howto.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--fg4);margin-bottom:10px;">HOW TO GET YOUR FREE KEY</div>'
+    +'<div style="font-size:13px;color:var(--fg3);line-height:1.8;">'
+    +'<div>1. Open <span style="color:var(--blue2);font-weight:600">aviationstack.com</span> in browser</div>'
+    +'<div>2. Click <span style="color:var(--fg2);font-weight:600">Get Free API Key</span></div>'
+    +'<div>3. Sign up with email (no card)</div>'
+    +'<div>4. Copy key from dashboard</div>'
+    +'<div>5. Paste it above ↑</div>'
+    +'</div>';
+  list.appendChild(howto);
+}
+
 function saveSets(){
   var btn=document.getElementById('setSave');btn.disabled=true;btn.textContent='Saving…';
   sa(KS,SL);sa(KCO,CO);
