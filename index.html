@@ -233,6 +233,40 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
 /* Route footer */
 .rm-foot{flex-shrink:0;padding:12px 16px max(env(safe-area-inset-bottom),16px);display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;border-top:1px solid var(--ln);background:#000;}
 
+/* ── Flight search ── */
+.flight-search-wrap{margin-bottom:12px;}
+.flight-search{width:100%;padding:13px 16px;background:var(--ink2);border:1.5px solid var(--ln2);border-radius:var(--rp);color:var(--fg);font-size:15px;font-weight:500;outline:none;-webkit-user-select:text;user-select:text;}
+.flight-search::placeholder{color:var(--fg4);}
+.flight-search:focus{border-color:var(--blue);}
+/* Flight card */
+.fl-card{display:flex;align-items:stretch;background:var(--ink2);border-radius:var(--r);border:1.5px solid var(--ln2);margin-bottom:10px;overflow:hidden;cursor:pointer;touch-action:manipulation;transition:border-color .15s,transform .1s;}
+.fl-card:active{transform:scale(.98);}
+.fl-card.sel{border-color:var(--blue);}
+.fl-card.past{opacity:.42;}
+.fl-card.past .fl-status{color:var(--fg4);}
+.fl-left{padding:14px 14px 14px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px;flex:1;min-width:0;}
+.fl-time{font-size:17px;font-weight:800;letter-spacing:-.3px;color:var(--fg);font-variant-numeric:tabular-nums;}
+.fl-status{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+.fl-status.landed{color:var(--green);}
+.fl-status.live{color:var(--amber);}
+.fl-status.sched{color:var(--blue2);}
+.fl-route{font-size:12px;font-weight:600;color:var(--fg3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fl-route span{color:var(--fg2);font-weight:700;}
+.fl-logo{width:90px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ink3);border-left:1px solid var(--ln);padding:10px 8px;gap:6px;}
+.fl-logo-img{width:70px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--ink4);}
+.fl-logo-img img{width:100%;height:100%;object-fit:cover;}
+.fl-logo-name{font-size:9px;font-weight:700;color:var(--fg3);text-align:center;letter-spacing:.3px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fl-right{padding:12px 14px 12px 0;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:80px;}
+.fl-info-row{display:flex;flex-direction:column;gap:1px;}
+.fl-info-lbl{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--fg4);}
+.fl-info-val{font-size:12px;font-weight:700;color:var(--fg2);}
+.fl-divider{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--fg4);padding:8px 0 6px;border-bottom:1px solid var(--ln);margin-bottom:8px;}
+.fl-empty{text-align:center;padding:40px 20px;color:var(--fg4);font-size:14px;font-weight:500;line-height:1.6;}
+.fl-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;}
+.fl-spinner{width:28px;height:28px;border:3px solid var(--ln2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fl-loading-txt{font-size:13px;color:var(--fg4);font-weight:500;}
+
 /* Toast */
 .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 80px);left:50%;transform:translateX(-50%) translateY(10px);padding:12px 24px;border-radius:var(--rp);font-size:14px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;background:var(--ink3);color:var(--fg);border:1px solid var(--ln2);box-shadow:0 8px 32px rgba(0,0,0,.8);}
 .toast.ok{background:var(--green2);border-color:transparent;}
@@ -290,7 +324,7 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
     <div class="seg">
       <div class="seg-inner">
         <button class="seg-btn on" id="tabS" onclick="swTab('s')">Split Buttons</button>
-        <button class="seg-btn" id="tabC" onclick="swTab('c')">Companies</button>
+        <button class="seg-btn" id="tabC" onclick="swTab('c')">Airlines</button>
       </div>
     </div>
     <div class="sh-list" id="setList"></div>
@@ -324,29 +358,24 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
   <div class="stab-wrap">
     <div class="stab-bar">
       <button class="stab on" id="st1" onclick="goStep(1)">
-        <span class="stab-name">Aircraft</span>
+        <span class="stab-name">Flight</span>
         <span class="stab-val" id="sv1"></span>
       </button>
       <button class="stab" id="st2" onclick="goStep(2)">
-        <span class="stab-name">Company</span>
+        <span class="stab-name">Parking Lot</span>
         <span class="stab-val" id="sv2"></span>
-      </button>
-      <button class="stab" id="st3" onclick="goStep(3)">
-        <span class="stab-name">Parking</span>
-        <span class="stab-val" id="sv3"></span>
       </button>
     </div>
   </div>
   <div class="rm-body">
     <div class="rm-panel on" id="rp1">
-      <div class="sec-lbl">Select Aircraft Type</div>
-      <div class="ac-grid" id="acGrid"></div>
+      <div class="flight-search-wrap">
+        <input class="flight-search" id="flightSearch" type="text" placeholder="Search flight or registration…" oninput="filterFlights()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="sec-lbl" id="flightStatusLbl">Loading arrivals…</div>
+      <div id="flightList"></div>
     </div>
     <div class="rm-panel" id="rp2">
-      <div class="sec-lbl">Select Company</div>
-      <div class="co-pick" id="coPick"></div>
-    </div>
-    <div class="rm-panel" id="rp3">
       <div class="sec-lbl">Select Parking Lot</div>
       <div id="lotGs"></div>
     </div>
@@ -363,6 +392,39 @@ body{width:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;background:
 <script>
 // ── Config ──
 var KU='fts_u',KQ='fts_q',KS='fts_s',KCO='fts_co';
+// Airlines that serve LBBG Burgas — names locked, only images editable
+var AIRLINES=[
+  {icao:'RYR',iata:'FR',name:'Ryanair'},
+  {icao:'WZZ',iata:'W6',name:'Wizz Air'},
+  {icao:'EZY',iata:'U2',name:'easyJet'},
+  {icao:'TUI',iata:'BY',name:'TUI'},
+  {icao:'TCX',iata:'MT',name:'Thomas Cook'},
+  {icao:'EXS',iata:'LS',name:'Jet2'},
+  {icao:'EJU',iata:'EC',name:'easyJet Europe'},
+  {icao:'LDA',iata:'LO',name:'LOT Polish'},
+  {icao:'FHY',iata:'FH',name:'Freebird'},
+  {icao:'SXS',iata:'XQ',name:'SunExpress'},
+  {icao:'SHQ',iata:'LZ',name:'Bulgaria Air'},
+  {icao:'QTR',iata:'QR',name:'Qatar Airways'},
+  {icao:'THY',iata:'TK',name:'Turkish Airlines'},
+  {icao:'AFL',iata:'SU',name:'Aeroflot'},
+  {icao:'AUA',iata:'OS',name:'Austrian'},
+  {icao:'DLH',iata:'LH',name:'Lufthansa'},
+  {icao:'BAW',iata:'BA',name:'British Airways'},
+  {icao:'AFR',iata:'AF',name:'Air France'},
+  {icao:'VLG',iata:'VY',name:'Vueling'},
+  {icao:'IBE',iata:'IB',name:'Iberia'},
+  {icao:'ETD',iata:'EY',name:'Etihad'},
+  {icao:'UAE',iata:'EK',name:'Emirates'},
+  {icao:'RYS',iata:'FR',name:'Ryanair Sun'},
+  {icao:'WKT',iata:'W6',name:'Wizz Air UK'},
+  {icao:'EWG',iata:'EW',name:'Eurowings'},
+  {icao:'LXA',iata:'LG',name:'Luxair'},
+  {icao:'ELY',iata:'LY',name:'El Al'},
+  {icao:'ISS',iata:'WB',name:'RwandAir'},
+  {icao:'JST',iata:'HB',name:'Jetairfly'},
+  {icao:'TOM',iata:'TOM',name:'TUI Airways'},
+];
 var NS=12,NC=12;
 var ACS=[
   {c:'B', bg:'#1e3a8a',cl:'#93c5fd',lb:'Code B', pl:'LJ45, ATR42, Yak40',mx:'B'},
@@ -497,6 +559,12 @@ function doSync(){
 }
 window.addEventListener('online',function(){if(qg().length)setTimeout(doSync,2000);});
 
+// ── Airline image storage ──
+var KAI='fts_airline_imgs'; // {icao: base64}
+function loadAirlineImgs(){try{return JSON.parse(localStorage.getItem(KAI)||'{}');}catch{return {};}}
+function saveAirlineImg(icao,b64){var d=loadAirlineImgs();d[icao]=b64;localStorage.setItem(KAI,JSON.stringify(d));}
+function getAirlineImg(icao){return loadAirlineImgs()[icao]||null;}
+
 // ── Wake lock + orientation ──
 var _wl=null;
 function wakeOn(){if('wakeLock' in navigator)navigator.wakeLock.request('screen').then(function(w){_wl=w;}).catch(function(){});}
@@ -596,7 +664,7 @@ function swTab(t){
   document.getElementById('tabS').className='seg-btn'+(t==='s'?' on':'');
   document.getElementById('tabC').className='seg-btn'+(t==='c'?' on':'');
   buildSetList();
-  document.getElementById('setSave').textContent=t==='s'?'Save':'Save Companies';
+  document.getElementById('setSave').textContent=t==='s'?'Save':'Save Airlines';
 }
 function buildSetList(){
   var list=document.getElementById('setList');list.innerHTML='';
@@ -622,29 +690,25 @@ function buildSetList(){
       card.appendChild(thumb);card.appendChild(body);list.appendChild(card);
     });
   } else {
-    CO.forEach(function(co,i){
-      if(!co.name&&!co.img)return;
-      var card=document.createElement('div');card.className='co-card';card.id='cc'+i;
+    // Airlines: name is locked (coded), only logo image is editable
+    var hint=document.createElement('div');
+    hint.style.cssText='font-size:12px;color:var(--fg4);padding:4px 0 10px;line-height:1.6;';
+    hint.textContent='Airline names are fixed. Tap the logo box to add your own image.';
+    list.appendChild(hint);
+    AIRLINES.forEach(function(al,i){
+      var imgs=loadAirlineImgs();
+      var card=document.createElement('div');card.className='co-card';card.id='alc'+i;
       var logo=document.createElement('div');logo.className='co-logo';
-      (function(idx){logo.addEventListener('click',function(){_ci=idx;_ct='c';document.getElementById('iPick').click();});})(i);
-      if(co.img){var im=document.createElement('img');im.src=co.img;logo.appendChild(im);}
-      else logo.textContent='🏢';
+      (function(idx){logo.addEventListener('click',function(){_ci=idx;_ct='al';document.getElementById('iPick').click();});})(i);
+      var imgData=imgs[al.icao];
+      if(imgData){var im=document.createElement('img');im.src=imgData;logo.appendChild(im);}
+      else{logo.style.cssText='font-size:11px;font-weight:700;color:var(--fg3);text-align:center;padding:4px;';logo.textContent=al.iata;}
       var body=document.createElement('div');body.className='co-body';
-      var lbl=document.createElement('div');lbl.className='sl-lbl';lbl.textContent='Company '+(i+1);
-      var inp=document.createElement('input');inp.className='sl-inp';inp.type='text';inp.placeholder='Company name…';inp.value=co.name||'';inp.setAttribute('inputmode','text');
-      (function(idx){inp.addEventListener('input',function(){CO[idx].name=this.value.trim();});})(i);
-      body.appendChild(lbl);body.appendChild(inp);
-      var del=document.createElement('button');del.className='co-del';del.textContent='×';
-      (function(idx){del.addEventListener('click',function(){CO[idx]={name:'',img:null};sa(KCO,CO);buildSetList();});})(i);
-      card.appendChild(logo);card.appendChild(body);card.appendChild(del);list.appendChild(card);
+      var lbl=document.createElement('div');lbl.className='sl-lbl';lbl.textContent=al.iata+' · '+al.icao;
+      var nm=document.createElement('div');nm.style.cssText='font-size:15px;font-weight:700;color:var(--fg2);margin-top:2px;';nm.textContent=al.name;
+      body.appendChild(lbl);body.appendChild(nm);
+      card.appendChild(logo);card.appendChild(body);list.appendChild(card);
     });
-    var add=document.createElement('button');add.className='co-add';add.innerHTML='<span style="font-size:22px">+</span> Add Company';
-    add.addEventListener('click',function(){
-      var ei=CO.findIndex(function(c){return!c.name&&!c.img;});
-      if(ei===-1){toast('Max companies reached','info');return;}
-      CO[ei]={name:'New Company',img:null};sa(KCO,CO);buildSetList();
-    });
-    list.appendChild(add);
   }
 }
 function saveSets(){
@@ -738,120 +802,228 @@ function cropOK(){
 }
 
 // ── Route ──
-var rStep=1;
+var rStep=1, _flights=[], _filteredFlights=[], _selFlight=null;
+var AIRPORT_ICAO='LBBG';
+
 function openRoute(){
   if(!S.splits.length)return;
-  S.ac=null;S.co=null;S.lot=null;rStep=1;
-  buildAcGrid();showStep(1);
+  S.ac=null;S.co=null;S.lot=null;_selFlight=null;rStep=1;
+  showStep(1);
+  loadFlights();
   var bs=document.getElementById('btnSend');
   bs.removeAttribute('data-saving');bs.style.display='none';bs.style.opacity='0.35';bs.style.pointerEvents='none';
   var bn=document.getElementById('btnNext');bn.style.display='';bn.style.opacity='0.35';bn.style.pointerEvents='none';
+  document.getElementById('flightSearch').value='';
   document.getElementById('routeMod').classList.add('on');
 }
 function closeRoute(){document.getElementById('routeMod').classList.remove('on');}
+
 function showStep(n){
   rStep=n;
-  [1,2,3].forEach(function(i){document.getElementById('rp'+i).classList.toggle('on',i===n);});
-  var isLast=n===3;
+  [1,2].forEach(function(i){document.getElementById('rp'+i).classList.toggle('on',i===n);});
+  var isLast=n===2;
   var bn=document.getElementById('btnNext'),bs=document.getElementById('btnSend');
-  bn.style.display=isLast?'none':'';bs.style.display=isLast?'':'none';
+  bn.style.display=isLast?'none':'';
+  bs.style.display=isLast?'':'none';
   updSteps();
 }
+
 function updSteps(){
-  [1,2,3].forEach(function(i){
+  [1,2].forEach(function(i){
     var el=document.getElementById('st'+i);if(!el)return;
     if(i<rStep)el.className='stab done';else if(i===rStep)el.className='stab on';else el.className='stab';
   });
-  document.getElementById('sv1').textContent=S.ac?S.ac.c:'';
-  document.getElementById('sv2').textContent=S.co||'';
-  document.getElementById('sv3').textContent=S.lot||'';
+  document.getElementById('sv1').textContent=_selFlight?_selFlight.callsign:'';
+  document.getElementById('sv2').textContent=S.lot||'';
 }
+
 function goStep(n){
-  // Tabs only navigate BACK to completed steps — never forward
-  if(n>=rStep) return;
+  if(n>=rStep)return; // only go back
   showStep(n);
 }
-function rNext(){if(rStep===1){if(!S.ac)return;buildCoPick();showStep(2);}else if(rStep===2){buildLots();showStep(3);updSave();}}
+function rNext(){
+  if(rStep===1){
+    if(!_selFlight)return;
+    buildLots();showStep(2);updSave();
+  }
+}
 function rBack(){if(rStep===1)closeRoute();else showStep(rStep-1);}
 
-function buildAcGrid(){
-  var el=document.getElementById('acGrid');el.innerHTML='';
-  ACS.forEach(function(ac){
-    var b=document.createElement('button');b.className='ac-card';b.style.background=ac.bg;
-    b.innerHTML='<div class="ac-big" style="color:'+ac.cl+'">'+ac.c+'</div><div class="ac-nm">'+ac.lb+'</div><div class="ac-pl">'+ac.pl+'</div>';
-    b.addEventListener('click',function(){
-      document.querySelectorAll('.ac-card').forEach(function(x){x.classList.remove('sel');});
-      b.classList.add('sel');S.ac=ac;
-      var bn=document.getElementById('btnNext');bn.style.opacity='1';bn.style.pointerEvents='auto';
+// ── OpenSky API ──
+function loadFlights(){
+  var listEl=document.getElementById('flightList');
+  var lblEl=document.getElementById('flightStatusLbl');
+  listEl.innerHTML='<div class="fl-loading"><div class="fl-spinner"></div><div class="fl-loading-txt">Fetching arrivals for '+AIRPORT_ICAO+'…</div></div>';
+  lblEl.textContent='';
+
+  // OpenSky arrivals API — last 12 hours to end of today
+  var now=Math.floor(Date.now()/1000);
+  var todayStart=new Date();todayStart.setHours(0,0,0,0);
+  var begin=Math.floor(todayStart.getTime()/1000);
+  var end=begin+86400; // full day
+
+  var url='https://opensky-network.org/api/flights/arrival?airport='+AIRPORT_ICAO+'&begin='+begin+'&end='+end;
+
+  fetch(url)
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(data){
+      if(!Array.isArray(data)||data.length===0){
+        listEl.innerHTML='<div class="fl-empty">No arrivals found for today.<br>Check back closer to flight times.</div>';
+        lblEl.textContent='';
+        return;
+      }
+      _flights=processFlights(data);
+      _filteredFlights=_flights.slice();
+      renderFlights(_filteredFlights);
+      lblEl.textContent='SELECT ARRIVING AIRCRAFT';
+    })
+    .catch(function(e){
+      listEl.innerHTML='<div class="fl-empty">Could not load flights.<br>Check your connection.<br><small style="color:var(--fg4)">'+e.message+'</small></div>';
+      lblEl.textContent='';
+    });
+}
+
+function processFlights(raw){
+  var now=Date.now()/1000;
+  var todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
+  var todayStart=todayMidnight.getTime()/1000;
+
+  var flights=raw.map(function(f){
+    var arrTime=f.lastSeen||f.firstSeen||0;
+    var depTime=f.firstSeen||0;
+    var callsign=(f.callsign||'').trim();
+    var reg=(f.estArrivalAirport===AIRPORT_ICAO)?f.icao24:'';
+    // Match airline from callsign
+    var airline=matchAirline(callsign);
+    // Time status
+    var diffMin=(arrTime-now)/60;
+    var status='scheduled';
+    if(arrTime>0&&arrTime<now) status='landed';
+    else if(arrTime>0&&diffMin<10) status='live';
+    return {
+      callsign:callsign,
+      icao24:f.icao24||'',
+      reg:f.icao24?f.icao24.toUpperCase():'',
+      arrTime:arrTime,
+      depTime:depTime,
+      estDep:f.estDepartureAirport||'',
+      estArr:f.estArrivalAirport||'',
+      status:status,
+      airline:airline,
+      diffMin:diffMin,
+    };
+  });
+
+  // Sort: upcoming first (by arr time asc), then past most recent first
+  var upcoming=flights.filter(function(f){return f.status!=='landed';}).sort(function(a,b){return a.arrTime-b.arrTime;});
+  var landed=flights.filter(function(f){return f.status==='landed';}).sort(function(a,b){return b.arrTime-a.arrTime;});
+  return upcoming.concat(landed);
+}
+
+function matchAirline(callsign){
+  if(!callsign)return null;
+  var prefix=callsign.replace(/[0-9]/g,'').toUpperCase();
+  for(var i=0;i<AIRLINES.length;i++){
+    if(AIRLINES[i].icao===prefix||callsign.toUpperCase().indexOf(AIRLINES[i].iata)===0){
+      return AIRLINES[i];
+    }
+  }
+  return null;
+}
+
+function renderFlights(flights){
+  var listEl=document.getElementById('flightList');
+  listEl.innerHTML='';
+  if(!flights.length){
+    listEl.innerHTML='<div class="fl-empty">No flights match your search.</div>';
+    return;
+  }
+  var shownDivider=false;
+  var now=Date.now()/1000;
+
+  flights.forEach(function(f){
+    // Add "Earlier Today" divider before past flights
+    if(f.status==='landed'&&!shownDivider){
+      var div=document.createElement('div');div.className='fl-divider';div.textContent='Earlier Today';
+      listEl.appendChild(div);shownDivider=true;
+    }
+
+    var card=document.createElement('div');
+    card.className='fl-card'+(f.status==='landed'?' past':'');
+
+    // Time display
+    var timeStr='—';
+    if(f.arrTime>0){
+      var d=new Date(f.arrTime*1000);
+      timeStr=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    }
+
+    // Status label
+    var statusClass='sched',statusTxt='SCHEDULED';
+    if(f.status==='landed'){statusClass='landed';statusTxt='LANDED';}
+    else if(f.status==='live'){statusClass='live';statusTxt='ARRIVING';}
+
+    // Origin airport
+    var origin=f.estDep||'—';
+
+    // Airline logo
+    var logoHtml='';
+    var airlineName='Unknown';
+    if(f.airline){
+      airlineName=f.airline.name;
+      var img=getAirlineImg(f.airline.icao);
+      if(img){
+        logoHtml='<img src="'+img+'">';
+      } else {
+        logoHtml='<span style="font-size:13px;font-weight:800;color:var(--fg2)">'+f.airline.iata+'</span>';
+      }
+    }
+
+    card.innerHTML=
+      '<div class="fl-left">'+
+        '<div class="fl-time">'+timeStr+'</div>'+
+        '<div class="fl-status '+statusClass+'">'+statusTxt+'</div>'+
+        '<div class="fl-route">FROM <span>'+origin+'</span></div>'+
+      '</div>'+
+      '<div class="fl-logo">'+
+        '<div class="fl-logo-img">'+logoHtml+'</div>'+
+        '<div class="fl-logo-name">'+airlineName+'</div>'+
+      '</div>'+
+      '<div class="fl-right">'+
+        '<div class="fl-info-row"><div class="fl-info-lbl">FLT</div><div class="fl-info-val">'+f.callsign+'</div></div>'+
+        '<div class="fl-info-row" style="margin-top:6px"><div class="fl-info-lbl">REG</div><div class="fl-info-val">'+f.reg+'</div></div>'+
+      '</div>';
+
+    card.addEventListener('click',function(){
+      document.querySelectorAll('.fl-card').forEach(function(x){x.classList.remove('sel');});
+      card.classList.add('sel');
+      _selFlight=f;
+      // Auto-fill session data from flight
+      S.co=f.airline?f.airline.name:'Unknown';
+      S.ac={code:f.callsign, max:'C'}; // placeholder, ac type from tracker if available
       updSteps();
+      // Enable next button
+      var bn=document.getElementById('btnNext');bn.style.opacity='1';bn.style.pointerEvents='auto';
     });
-    el.appendChild(b);
+
+    listEl.appendChild(card);
   });
 }
-function buildCoPick(){
-  var el=document.getElementById('coPick');el.innerHTML='';
-  CO.forEach(function(co){
-    if(!co.name)return;
-    var b=document.createElement('button');b.className='co-pc';
-    var ih=co.img?'<img src="'+co.img+'">':'<span style="font-size:30px">🏢</span>';
-    b.innerHTML='<div class="co-pc-img">'+ih+'</div><div class="co-pc-name">'+co.name+'</div>';
-    b.addEventListener('click',function(){
-      document.querySelectorAll('.co-pc').forEach(function(x){x.classList.remove('sel');});
-      b.classList.add('sel');S.co=co.name;updSteps();
-      // No auto-advance — user taps Next → to continue
+
+function filterFlights(){
+  var q=document.getElementById('flightSearch').value.trim().toUpperCase();
+  if(!q){_filteredFlights=_flights.slice();}
+  else{
+    _filteredFlights=_flights.filter(function(f){
+      return (f.callsign&&f.callsign.toUpperCase().indexOf(q)>=0)||
+             (f.reg&&f.reg.toUpperCase().indexOf(q)>=0)||
+             (f.airline&&f.airline.name.toUpperCase().indexOf(q)>=0);
     });
-    el.appendChild(b);
-  });
-  var unk=document.createElement('button');unk.className='co-pc';
-  unk.innerHTML='<div class="co-pc-img"><span style="font-size:30px">🚫</span></div><div class="co-pc-name">Unknown</div>';
-  unk.addEventListener('click',function(){
-    document.querySelectorAll('.co-pc').forEach(function(x){x.classList.remove('sel');});
-    unk.classList.add('sel');S.co='Unknown';updSteps();
-    // No auto-advance
-  });
-  el.appendChild(unk);
-  var bn=document.getElementById('btnNext');bn.style.opacity='1';bn.style.pointerEvents='auto';
-}
-function buildLots(){
-  var el=document.getElementById('lotGs');el.innerHTML='';
-  var si=ci(S.ac?S.ac.mx:'B');
-  LGS.forEach(function(grp){
-    var w=document.createElement('div');w.className='lot-g';
-    var h=document.createElement('div');h.className='lot-g-h';h.textContent=grp.g;w.appendChild(h);
-    var c=document.createElement('div');c.className='lot-chips';
-    grp.ids.forEach(function(id){
-      // Blocked if plane code index > lot max code index
-      // (plane is too big for this stand)
-      var lotMax=LM[id]||'F'; // if not in map, any plane fits
-      var blk=si>ci(lotMax);
-      var chip=document.createElement('button');chip.className='lchip'+(blk?' blk':'');chip.dataset.v=id;chip.textContent=id;
-      if(!blk)chip.addEventListener('click',function(){
-        var v=chip.dataset.v;
-        if(S.lot===v){S.lot=null;document.querySelectorAll('.lchip').forEach(function(x){x.classList.remove('sel');});}
-        else{S.lot=v;document.querySelectorAll('.lchip:not(.blk)').forEach(function(x){x.classList.toggle('sel',x.dataset.v===v);});}
-        updSteps();updSave();
-      });
-      c.appendChild(chip);
-    });
-    w.appendChild(c);el.appendChild(w);
-  });
-}
-function updSave(){
-  var bs=document.getElementById('btnSend');
-  if(S.lot&&S.ac){bs.removeAttribute('data-saving');bs.style.opacity='1';bs.style.pointerEvents='auto';}
-  else{bs.style.opacity='0.35';bs.style.pointerEvents='none';}
-}
-function doSave(){
-  var bs=document.getElementById('btnSend');
-  if(bs.hasAttribute('data-saving'))return;
-  bs.setAttribute('data-saving','1');bs.style.opacity='0.5';bs.style.pointerEvents='none';bs.textContent='Saving…';
-  var sess={startTimeISO:S.iso,splits:S.splits.slice(),parkLot:S.lot,planeSize:S.ac?S.ac.c:'',company:S.co||''};
-  np(sess).then(function(d){
-    if(d&&d.error)throw new Error(d.error);
-    toast('✓ Saved — Row '+d.row,'ok');closeRoute();setTimeout(reset,1200);
-  }).catch(function(){
-    qpush(sess);toast('Offline — queued ('+qg().length+')','info');closeRoute();setTimeout(reset,1500);
-  });
+  }
+  renderFlights(_filteredFlights);
 }
 
 // ── Reset ──
