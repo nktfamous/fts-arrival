@@ -780,14 +780,26 @@ function buildAPITab(list){
   testBtn.addEventListener('click',function(){
     var k=localStorage.getItem('fts_avkey')||'';
     if(!k){testOut.style.display='block';testOut.textContent='No API key saved yet.';return;}
-    testOut.style.display='block';testOut.textContent='Testing…';
+    testOut.style.display='block';testOut.textContent='Testing...';
     jsonp(URL_,{action:'getFlights',airport:'BOJ',apikey:k},15000)
       .then(function(d){
-        if(d.error){testOut.textContent='ERROR: '+d.error;}
-        else if(d.flights&&d.flights.length>0){testOut.textContent='✓ SUCCESS! Got '+d.flights.length+' flights.\n\nFirst flight: '+JSON.stringify(d.flights[0]).substring(0,200);}
-        else{testOut.textContent='✓ Connected but 0 flights returned.\nThis means no flights scheduled right now, or the Apps Script needs redeploying.\n\nFull response: '+JSON.stringify(d).substring(0,300);}
+        testOut.style.display='block';
+        if(d.error){
+          testOut.textContent='ERROR: '+d.error;
+          testOut.style.color='var(--red)';
+        } else if(d.flights&&d.flights.length>0){
+          testOut.textContent='SUCCESS! Got '+d.flights.length+' flights. Open Finish Route to see them.';
+          testOut.style.color='var(--green)';
+        } else {
+          testOut.textContent='Connected OK but 0 flights right now. Try opening Finish Route - may just be no scheduled flights at this time.';
+          testOut.style.color='var(--amber)';
+        }
       })
-      .catch(function(e){testOut.textContent='TIMEOUT/ERROR: '+e.message+'\n\nMake sure you redeployed Code.gs as a new version!';});
+      .catch(function(e){
+        testOut.style.display='block';
+        testOut.textContent='FAILED: '+e.message+' -- Redeploy Code.gs as new version in Apps Script!';
+        testOut.style.color='var(--red)';
+      });
   });
   testWrap.appendChild(testBtn);testWrap.appendChild(testOut);
   list.appendChild(testWrap);
@@ -934,6 +946,12 @@ function rNext(){
 function rBack(){if(rStep===1)closeRoute();else showStep(rStep-1);}
 
 // ── OpenSky API ──
+function showFlightMsg(el,msg,retry){
+  var html='<div class="fl-empty">'+msg;
+  if(retry)html+='<br><br><button onclick="loadFlights()" style="padding:10px 18px;border-radius:50px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Retry</button>';
+  html+='</div>';
+  el.innerHTML=html;
+}
 function loadFlights(){
   var listEl=document.getElementById('flightList');
   var lblEl=document.getElementById('flightStatusLbl');
@@ -970,11 +988,7 @@ function loadFlights(){
         return;
       }
       if(!data.flights||data.flights.length===0){
-        listEl.innerHTML='<div class="fl-empty">'
-          +'No arrivals found for today.<br><br>'
-          +'<small style="color:var(--fg4)">BOJ is a seasonal airport — flights run May–October.<br>If it's the season, try refreshing.</small><br><br>'
-          +'<button onclick="loadFlights()" style="padding:10px 18px;border-radius:50px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Refresh</button>'
-          +'</div>';
+        showFlightMsg(listEl,'No arrivals found for today. BOJ is seasonal - flights run May-October.',true);
         lblEl.textContent='';
         return;
       }
