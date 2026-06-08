@@ -788,10 +788,10 @@ function buildAPITab(list){
           testOut.textContent='ERROR: '+d.error;
           testOut.style.color='var(--red)';
         } else if(d.flights&&d.flights.length>0){
-          testOut.textContent='SUCCESS! Got '+d.flights.length+' flights. Open Finish Route to see them.';
+          testOut.textContent='SUCCESS! Got '+d.flights.length+' flights.\n\nFirst: '+d.flights[0].callsign+' from '+d.flights[0].origin+(d.debug_keys?'\n\nFields: '+d.debug_keys:'');
           testOut.style.color='var(--green)';
         } else {
-          testOut.textContent='Connected OK but 0 flights right now. Try opening Finish Route - may just be no scheduled flights at this time.';
+          testOut.textContent='Connected OK - 0 flights.\n\n'+(d.debug||'No debug info')+'\n\nKeys: '+(d.debug_keys||'none');
           testOut.style.color='var(--amber)';
         }
       })
